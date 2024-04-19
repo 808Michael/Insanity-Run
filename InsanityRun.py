@@ -5,7 +5,7 @@ from pygame.locals import *
 # Constants for the screen
 SCREEN_WIDTH = 800
 SCREEN_HEIGHT = 600
-BLACK = (0, 0, 0)
+LIGHT_BLUE = (100, 149, 237)
 GREEN = (0, 255, 0)
 
 # Player settings
@@ -28,7 +28,7 @@ class Player:
 def main():
     pygame.init()
     screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
-    pygame.display.set_caption("The World's Hardest Game - Movement Only")
+    pygame.display.set_caption("Insanity Run")
 
     clock = pygame.time.Clock()
 
@@ -56,7 +56,7 @@ def main():
         player.move(dx, dy)
 
         # Draw the player
-        screen.fill(BLACK)
+        screen.fill(LIGHT_BLUE)
         player.draw(screen)
         pygame.display.flip()
         clock.tick(60)
