@@ -154,6 +154,34 @@ def main():
 
         level1.draw(screen)
 
+        coin_size = 10
+        coin_image = pygame.Surface((coin_size, coin_size), pygame.SRCALPHA)
+        pygame.draw.circle(coin_image, (255, 215, 0), (coin_size // 2, coin_size // 2), coin_size // 2)
+        coin_rect = coin_image.get_rect(center=(SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2))
+        screen.blit(coin_image, coin_rect)
+
+        coin_radius = 20
+        for i in range(-1, 2):
+            for j in range(-1, 2):
+                if i == 0 and j == 0:
+                    continue
+                offset_x = i * coin_radius
+                offset_y = j * coin_radius
+                coin_rect = coin_image.get_rect(center=(SCREEN_WIDTH // 2 + offset_x, SCREEN_HEIGHT // 2 + offset_y))
+                screen.blit(coin_image, coin_rect)
+
+        coin_rect = coin_image.get_rect(center=(150, 150))
+        screen.blit(coin_image, coin_rect)
+
+        coin_rect = coin_image.get_rect(center=(650, 150))
+        screen.blit(coin_image, coin_rect)
+
+        coin_rect = coin_image.get_rect(center=(150, 450))
+        screen.blit(coin_image, coin_rect)
+
+        coin_rect = coin_image.get_rect(center=(650, 450))
+        screen.blit(coin_image, coin_rect)
+
         player.draw(screen)
 
         attempts_text = font.render("Attempts: {}".format(attempts), True, BLACK)
