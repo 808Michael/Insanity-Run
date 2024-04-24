@@ -101,6 +101,8 @@ class RedSquare:
         self.angle_offset = angle_offset
         self.radius = radius
         self.angle = 0
+        self.x = center[0]
+        self.y = center[1]
 
     def update_position(self):
         self.angle += 2
@@ -191,6 +193,15 @@ def main():
             (level1.square_right[3], level1.square_right[0]),
         ]
         player.move(dx, dy, level_lines)
+
+        for red_square_group in [red_squares_150_150, red_squares_150_450, red_squares_650_150, red_squares_650_450]:
+            for red_square in red_square_group:
+                distance = math.hypot(player.x - red_square.x, player.y - red_square.y)
+                if distance < PLAYER_RADIUS + 5:
+                    player.x = 75
+                    player.y = 300
+
+                    attempts += 1
 
         screen.fill(LIGHT_BLUE)
 
