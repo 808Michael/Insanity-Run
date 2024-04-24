@@ -230,6 +230,14 @@ def main():
                     attempts += 1
                     death_sound.play()
 
+        for orbiting_square in orbiting_squares:
+            distance = math.hypot(player.x - orbiting_square.x, player.y - orbiting_square.y)
+            if distance < PLAYER_RADIUS + 5:
+                player.x = 75
+                player.y = 300
+                attempts += 1
+                death_sound.play()
+
         screen.fill(LIGHT_BLUE)
 
         level1.draw(screen)
