@@ -25,9 +25,35 @@ class Player:
     def draw(self, screen):
         pygame.draw.circle(screen, GREEN, (self.x, self.y), self.radius)
 
-    def move(self, dx, dy):
-        self.x += dx
-        self.y += dy
+    def move(self, dx, dy, level_lines):
+        new_x = self.x + dx
+        new_y = self.y + dy
+
+        for line in level_lines:
+            if self._is_colliding_with_line((self.x, self.y), (new_x, new_y), line):
+                return
+
+        self.x = new_x
+        self.y = new_y
+
+    def _is_colliding_with_line(self, start, end, line):
+        # Calculate line segment parameters
+        x1, y1 = start
+        x2, y2 = end
+        x3, y3 = line[0]
+        x4, y4 = line[1]
+
+        denominator = ((y4 - y3) * (x2 - x1)) - ((x4 - x3) * (y2 - y1))
+
+        if denominator == 0:
+            return False
+
+        ua = (((x4 - x3) * (y1 - y3)) - ((y4 - y3) * (x1 - x3))) / denominator
+        ub = (((x2 - x1) * (y1 - y3)) - ((y2 - y1) * (x1 - x3))) / denominator
+
+        if 0 <= ua <= 1 and 0 <= ub <= 1:
+            return True
+        return False
 
 
 class Level1:
@@ -56,6 +82,14 @@ class Level1:
         ], 0)
         pygame.draw.polygon(screen, BLUE, self.square_left, 0)
         pygame.draw.polygon(screen, BLUE, self.square_right, 0)
+
+    def get_line_rects(self):
+        rects = []
+        rects.append(pygame.Rect(self.top_line[0], (self.top_line[1][0] - self.top_line[0][0], 8)))
+        rects.append(pygame.Rect(self.bottom_line[0], (self.bottom_line[1][0] - self.bottom_line[0][0], 8)))
+        rects.append(pygame.Rect(self.square_left[0], (50, 100)))
+        rects.append(pygame.Rect(self.square_right[1], (50, 100)))
+        return rects
 
 
 def main():
@@ -92,7 +126,21 @@ def main():
         if keys[K_DOWN]:
             dy = PLAYER_SPEED
 
-        player.move(dx, dy)
+        level_lines = [
+            (level1.top_line[0], level1.top_line[1]),
+            (level1.bottom_line[0], level1.bottom_line[1]),
+            ((100, 100), (100, 250)),
+            ((100, 500), (100, 350)),
+            ((700, 100), (700, 250)),
+            ((700, 500), (700, 350)),
+            (level1.square_left[0], level1.square_left[1]),
+            (level1.square_left[2], level1.square_left[3]),
+            (level1.square_left[3], level1.square_left[0]),
+            (level1.square_right[0], level1.square_right[1]),
+            (level1.square_right[2], level1.square_right[3]),
+            (level1.square_right[3], level1.square_right[0]),
+        ]
+        player.move(dx, dy, level_lines)
 
         screen.fill(LIGHT_BLUE)
 
