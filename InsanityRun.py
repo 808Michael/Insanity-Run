@@ -114,6 +114,25 @@ class RedSquare:
         pygame.draw.rect(screen, RED, (self.x - 5, self.y - 5, 10, 10))
 
 
+class OrbitingSquare:
+    def __init__(self, center, angle_offset, radius):
+        self.center = center
+        self.angle_offset = angle_offset
+        self.radius = radius
+        self.angle = 0
+        self.x = center[0] + radius * math.cos(math.radians(angle_offset))
+        self.y = center[1] + radius * math.sin(math.radians(angle_offset))
+
+    def update_position(self):
+        self.angle += 2
+        self.angle %= 360
+        self.x = self.center[0] + self.radius * math.cos(math.radians(self.angle + self.angle_offset))
+        self.y = self.center[1] + self.radius * math.sin(math.radians(self.angle + self.angle_offset))
+
+    def draw(self, screen):
+        pygame.draw.rect(screen, RED, (self.x - 5, self.y - 5, 10, 10))
+
+
 def main():
     pygame.init()
     screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
@@ -162,6 +181,12 @@ def main():
         red_square = RedSquare((650, 450), angle_offset, 50)
         red_squares_650_450.append(red_square)
 
+    orbiting_squares = []
+    for i in range(8):
+        angle_offset = i * 45
+        orbiting_square = OrbitingSquare((400, 300), angle_offset, 100)
+        orbiting_squares.append(orbiting_square)
+
     while True:
         for event in pygame.event.get():
             if event.type == QUIT:
@@ -202,9 +227,7 @@ def main():
                 if distance < PLAYER_RADIUS + 5:
                     player.x = 75
                     player.y = 300
-
                     attempts += 1
-
                     death_sound.play()
 
         screen.fill(LIGHT_BLUE)
@@ -226,6 +249,10 @@ def main():
         for red_square in red_squares_650_450:
             red_square.update_position()
             red_square.draw(screen)
+
+        for orbiting_square in orbiting_squares:
+            orbiting_square.update_position()
+            orbiting_square.draw(screen)
 
         coin_size = 10
         coin_image = pygame.Surface((coin_size, coin_size), pygame.SRCALPHA)
