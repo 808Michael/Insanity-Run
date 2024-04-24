@@ -130,6 +130,8 @@ def main():
 
     pygame.mixer.music.play(loops=-1)
 
+    death_sound = pygame.mixer.Sound("mp3/geometry-dash-death-sound-effect.mp3")
+
     attempts = 0
     current_level = 1
     total_levels = 5
@@ -202,6 +204,8 @@ def main():
                     player.y = 300
 
                     attempts += 1
+
+                    death_sound.play()
 
         screen.fill(LIGHT_BLUE)
 
