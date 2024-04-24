@@ -1,5 +1,6 @@
 import pygame
 import sys
+import math
 from pygame.locals import *
 
 # Constants for the screen
@@ -10,6 +11,7 @@ BLUE = (100, 149, 200)
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
 GREEN = (0, 255, 0)
+RED = (255, 0, 0)
 FONT_SIZE = 24
 
 # Player settings
@@ -39,7 +41,6 @@ class Player:
         self.y = new_y
 
     def _is_colliding_with_line(self, start, end, line):
-
         x1, y1 = start
         x2, y2 = end
         x3, y3 = line[0]
@@ -94,6 +95,23 @@ class Level1:
         return rects
 
 
+class RedSquare:
+    def __init__(self, center, angle_offset, radius):
+        self.center = center
+        self.angle_offset = angle_offset
+        self.radius = radius
+        self.angle = 0
+
+    def update_position(self):
+        self.angle += 2
+        self.angle %= 360
+        self.x = self.center[0] + self.radius * math.cos(math.radians(self.angle + self.angle_offset))
+        self.y = self.center[1] + self.radius * math.sin(math.radians(self.angle + self.angle_offset))
+
+    def draw(self, screen):
+        pygame.draw.rect(screen, RED, (self.x - 5, self.y - 5, 10, 10))
+
+
 def main():
     pygame.init()
     screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
@@ -115,6 +133,30 @@ def main():
     total_levels = 5
 
     font = pygame.font.Font(None, FONT_SIZE)
+
+    red_squares_150_150 = []
+    for i in range(4):
+        angle_offset = i * 90
+        red_square = RedSquare((150, 150), angle_offset, 50)
+        red_squares_150_150.append(red_square)
+
+    red_squares_150_450 = []
+    for i in range(4):
+        angle_offset = i * 90
+        red_square = RedSquare((150, 450), angle_offset, 50)
+        red_squares_150_450.append(red_square)
+
+    red_squares_650_150 = []
+    for i in range(4):
+        angle_offset = i * 90
+        red_square = RedSquare((650, 150), angle_offset, 50)
+        red_squares_650_150.append(red_square)
+
+    red_squares_650_450 = []
+    for i in range(4):
+        angle_offset = i * 90
+        red_square = RedSquare((650, 450), angle_offset, 50)
+        red_squares_650_450.append(red_square)
 
     while True:
         for event in pygame.event.get():
@@ -153,6 +195,22 @@ def main():
         screen.fill(LIGHT_BLUE)
 
         level1.draw(screen)
+
+        for red_square in red_squares_150_150:
+            red_square.update_position()
+            red_square.draw(screen)
+
+        for red_square in red_squares_150_450:
+            red_square.update_position()
+            red_square.draw(screen)
+
+        for red_square in red_squares_650_150:
+            red_square.update_position()
+            red_square.draw(screen)
+
+        for red_square in red_squares_650_450:
+            red_square.update_position()
+            red_square.draw(screen)
 
         coin_size = 10
         coin_image = pygame.Surface((coin_size, coin_size), pygame.SRCALPHA)
