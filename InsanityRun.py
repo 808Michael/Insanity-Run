@@ -10,6 +10,7 @@ BLUE = (100, 149, 200)
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
 GREEN = (0, 255, 0)
+FONT_SIZE = 24
 
 # Player settings
 PLAYER_RADIUS = 10
@@ -21,6 +22,7 @@ class Player:
         self.x = x
         self.y = y
         self.radius = PLAYER_RADIUS
+        self.coins = 0
 
     def draw(self, screen):
         pygame.draw.circle(screen, GREEN, (self.x, self.y), self.radius)
@@ -37,7 +39,7 @@ class Player:
         self.y = new_y
 
     def _is_colliding_with_line(self, start, end, line):
-        # Calculate line segment parameters
+
         x1, y1 = start
         x2, y2 = end
         x3, y3 = line[0]
@@ -108,6 +110,12 @@ def main():
 
     pygame.mixer.music.play(loops=-1)
 
+    attempts = 0
+    current_level = 1
+    total_levels = 5
+
+    font = pygame.font.Font(None, FONT_SIZE)
+
     while True:
         for event in pygame.event.get():
             if event.type == QUIT:
@@ -147,6 +155,17 @@ def main():
         level1.draw(screen)
 
         player.draw(screen)
+
+        attempts_text = font.render("Attempts: {}".format(attempts), True, BLACK)
+        text_rect = attempts_text.get_rect(center=(SCREEN_WIDTH // 2, FONT_SIZE))
+        screen.blit(attempts_text, text_rect)
+
+        coins_text = font.render("Coins: {}".format(player.coins), True, BLACK)
+        screen.blit(coins_text, (10, 10))
+
+        level_text = font.render("Level {}/{}".format(current_level, total_levels), True, BLACK)
+        level_rect = level_text.get_rect(topright=(SCREEN_WIDTH - 10, 10))
+        screen.blit(level_text, level_rect)
 
         pygame.display.flip()
         clock.tick(60)
