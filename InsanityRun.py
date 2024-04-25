@@ -187,6 +187,33 @@ def main():
         orbiting_square = OrbitingSquare((400, 300), angle_offset, 100)
         orbiting_squares.append(orbiting_square)
 
+    distance_multiplier = 1.5
+
+    coin_size = 10
+    coin_image = pygame.Surface((coin_size, coin_size), pygame.SRCALPHA)
+    pygame.draw.circle(coin_image, (255, 215, 0), (coin_size // 2, coin_size // 2), coin_size // 2)
+
+    center_x = SCREEN_WIDTH // 2
+    center_y = SCREEN_HEIGHT // 2
+
+    distance = int(coin_size * distance_multiplier)
+
+    coin_positions = [
+        (center_x, center_y),
+        (150, 150),
+        (650, 150),
+        (150, 450),
+        (650, 450),
+        (center_x - distance, center_y - distance),
+        (center_x - distance, center_y),
+        (center_x - distance, center_y + distance),
+        (center_x, center_y - distance),
+        (center_x, center_y + distance),
+        (center_x + distance, center_y - distance),
+        (center_x + distance, center_y),
+        (center_x + distance, center_y + distance)
+    ]
+
     while True:
         for event in pygame.event.get():
             if event.type == QUIT:
@@ -221,26 +248,21 @@ def main():
         ]
         player.move(dx, dy, level_lines)
 
-        for red_square_group in [red_squares_150_150, red_squares_150_450, red_squares_650_150, red_squares_650_450]:
-            for red_square in red_square_group:
-                distance = math.hypot(player.x - red_square.x, player.y - red_square.y)
-                if distance < PLAYER_RADIUS + 5:
-                    player.x = 75
-                    player.y = 300
-                    attempts += 1
-                    death_sound.play()
+        for coin_pos in coin_positions:
+            distance = math.hypot(player.x - coin_pos[0], player.y - coin_pos[1])
+            if distance < PLAYER_RADIUS + coin_size // 2:
+                coin_positions.remove(coin_pos)
 
-        for orbiting_square in orbiting_squares:
-            distance = math.hypot(player.x - orbiting_square.x, player.y - orbiting_square.y)
-            if distance < PLAYER_RADIUS + 5:
-                player.x = 75
-                player.y = 300
-                attempts += 1
-                death_sound.play()
+                player.coins += 1
 
         screen.fill(LIGHT_BLUE)
 
         level1.draw(screen)
+
+        # Draw coins
+        for coin_pos in coin_positions:
+            coin_rect = coin_image.get_rect(center=coin_pos)
+            screen.blit(coin_image, coin_rect)
 
         for red_square in red_squares_150_150:
             red_square.update_position()
@@ -261,34 +283,6 @@ def main():
         for orbiting_square in orbiting_squares:
             orbiting_square.update_position()
             orbiting_square.draw(screen)
-
-        coin_size = 10
-        coin_image = pygame.Surface((coin_size, coin_size), pygame.SRCALPHA)
-        pygame.draw.circle(coin_image, (255, 215, 0), (coin_size // 2, coin_size // 2), coin_size // 2)
-        coin_rect = coin_image.get_rect(center=(SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2))
-        screen.blit(coin_image, coin_rect)
-
-        coin_radius = 20
-        for i in range(-1, 2):
-            for j in range(-1, 2):
-                if i == 0 and j == 0:
-                    continue
-                offset_x = i * coin_radius
-                offset_y = j * coin_radius
-                coin_rect = coin_image.get_rect(center=(SCREEN_WIDTH // 2 + offset_x, SCREEN_HEIGHT // 2 + offset_y))
-                screen.blit(coin_image, coin_rect)
-
-        coin_rect = coin_image.get_rect(center=(150, 150))
-        screen.blit(coin_image, coin_rect)
-
-        coin_rect = coin_image.get_rect(center=(650, 150))
-        screen.blit(coin_image, coin_rect)
-
-        coin_rect = coin_image.get_rect(center=(150, 450))
-        screen.blit(coin_image, coin_rect)
-
-        coin_rect = coin_image.get_rect(center=(650, 450))
-        screen.blit(coin_image, coin_rect)
 
         player.draw(screen)
 
