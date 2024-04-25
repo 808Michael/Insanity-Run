@@ -1,6 +1,8 @@
 import pygame
 import sys
 import math
+import pygame.time
+import itertools
 from pygame.locals import *
 
 # Constants for the screen
@@ -45,15 +47,13 @@ class Player:
         x2, y2 = end
         x3, y3 = line[0]
         x4, y4 = line[1]
-
         denominator = ((y4 - y3) * (x2 - x1)) - ((x4 - x3) * (y2 - y1))
 
         if denominator == 0:
-            return False
 
+            return False
         ua = (((x4 - x3) * (y1 - y3)) - ((y4 - y3) * (x1 - x3))) / denominator
         ub = (((x2 - x1) * (y1 - y3)) - ((y2 - y1) * (x1 - x3))) / denominator
-
         if 0 <= ua <= 1 and 0 <= ub <= 1:
             return True
         return False
@@ -120,11 +120,18 @@ class OrbitingSquare:
         self.angle_offset = angle_offset
         self.radius = radius
         self.angle = 0
-        self.x = center[0] + radius * math.cos(math.radians(angle_offset))
-        self.y = center[1] + radius * math.sin(math.radians(angle_offset))
+        self.x = center[0] + radius * math.cos(math.radians(angle_offset))  # Initialize x position
+        self.y = center[1] + radius * math.sin(math.radians(angle_offset))  # Initialize y position
+        self.last_update_time = pygame.time.get_ticks()
 
     def update_position(self):
-        self.angle += 2
+        current_time = pygame.time.get_ticks()
+        elapsed_time = current_time - self.last_update_time
+        self.last_update_time = current_time
+
+        angle_increment = (elapsed_time / 1000) * 150
+
+        self.angle += angle_increment
         self.angle %= 360
         self.x = self.center[0] + self.radius * math.cos(math.radians(self.angle + self.angle_offset))
         self.y = self.center[1] + self.radius * math.sin(math.radians(self.angle + self.angle_offset))
@@ -157,45 +164,13 @@ def main():
 
     font = pygame.font.Font(None, FONT_SIZE)
 
-    red_squares_150_150 = []
-    for i in range(4):
-        angle_offset = i * 90
-        red_square = RedSquare((150, 150), angle_offset, 50)
-        red_squares_150_150.append(red_square)
-
-    red_squares_150_450 = []
-    for i in range(4):
-        angle_offset = i * 90
-        red_square = RedSquare((150, 450), angle_offset, 50)
-        red_squares_150_450.append(red_square)
-
-    red_squares_650_150 = []
-    for i in range(4):
-        angle_offset = i * 90
-        red_square = RedSquare((650, 150), angle_offset, 50)
-        red_squares_650_150.append(red_square)
-
-    red_squares_650_450 = []
-    for i in range(4):
-        angle_offset = i * 90
-        red_square = RedSquare((650, 450), angle_offset, 50)
-        red_squares_650_450.append(red_square)
-
-    orbiting_squares = []
-    for i in range(8):
-        angle_offset = i * 45
-        orbiting_square = OrbitingSquare((400, 300), angle_offset, 100)
-        orbiting_squares.append(orbiting_square)
-
-    distance_multiplier = 1.5
-
     coin_size = 10
     coin_image = pygame.Surface((coin_size, coin_size), pygame.SRCALPHA)
     pygame.draw.circle(coin_image, (255, 215, 0), (coin_size // 2, coin_size // 2), coin_size // 2)
 
     center_x = SCREEN_WIDTH // 2
     center_y = SCREEN_HEIGHT // 2
-
+    distance_multiplier = 1.5
     distance = int(coin_size * distance_multiplier)
 
     coin_positions = [
@@ -213,6 +188,37 @@ def main():
         (center_x + distance, center_y),
         (center_x + distance, center_y + distance)
     ]
+
+    red_squares_150_150 = []
+    red_squares_150_450 = []
+    red_squares_650_150 = []
+    red_squares_650_450 = []
+
+    for i in range(4):
+        angle_offset = i * 90
+        red_square = RedSquare((150, 150), angle_offset, 50)
+        red_squares_150_150.append(red_square)
+
+    for i in range(4):
+        angle_offset = i * 90
+        red_square = RedSquare((150, 450), angle_offset, 50)
+        red_squares_150_450.append(red_square)
+
+    for i in range(4):
+        angle_offset = i * 90
+        red_square = RedSquare((650, 150), angle_offset, 50)
+        red_squares_650_150.append(red_square)
+
+    for i in range(4):
+        angle_offset = i * 90
+        red_square = RedSquare((650, 450), angle_offset, 50)
+        red_squares_650_450.append(red_square)
+
+    orbiting_squares = []
+    for i in range(8):
+        angle_offset = i * 45
+        orbiting_square = OrbitingSquare((400, 300), angle_offset, 100)
+        orbiting_squares.append(orbiting_square)
 
     while True:
         for event in pygame.event.get():
@@ -246,46 +252,132 @@ def main():
             (level1.square_right[2], level1.square_right[3]),
             (level1.square_right[3], level1.square_right[0]),
         ]
+
         player.move(dx, dy, level_lines)
 
+        # Check collision with red squares
+        for red_square_group in [red_squares_150_150, red_squares_150_450, red_squares_650_150, red_squares_650_450]:
+            for red_square in red_square_group:
+                distance = math.hypot(player.x - red_square.x, player.y - red_square.y)
+                if distance < PLAYER_RADIUS + 5:
+                    player.x = 75
+                    player.y = 300
+                    attempts += 1
+                    death_sound.play()
+
+                    # Reset coins
+                    player.coins = 0
+
+                    # Respawn coins
+                    coin_positions = [
+                        (center_x, center_y),
+                        (150, 150),
+                        (650, 150),
+                        (150, 450),
+                        (650, 450),
+                        (center_x - distance, center_y - distance),
+                        (center_x - distance, center_y),
+                        (center_x - distance, center_y + distance),
+                        (center_x, center_y - distance),
+                        (center_x, center_y + distance),
+                        (center_x + distance, center_y - distance),
+                        (center_x + distance, center_y),
+                        (center_x + distance, center_y + distance)
+                    ]
+
+                    # Respawn red squares
+                    for red_square in red_square_group:
+                        red_square.x = red_square.center[0]
+                        red_square.y = red_square.center[1]
+
+                    # Respawn orbiting squares
+                    for orbiting_square in orbiting_squares:
+                        orbiting_square.x = orbiting_square.center[0] + orbiting_square.radius * math.cos(
+                            math.radians(orbiting_square.angle_offset))
+                        orbiting_square.y = orbiting_square.center[1] + orbiting_square.radius * math.sin(
+                            math.radians(orbiting_square.angle_offset))
+
+        for orbiting_square in orbiting_squares:
+            distance = math.hypot(player.x - orbiting_square.x, player.y - orbiting_square.y)
+            if distance < PLAYER_RADIUS + 5:
+                player.x = 75
+                player.y = 300
+                attempts += 1
+                death_sound.play()
+
+                # Reset coins
+                player.coins = 0
+
+                # Respawn coins
+                coin_positions = [
+                    (center_x, center_y),
+                    (150, 150),
+                    (650, 150),
+                    (150, 450),
+                    (650, 450),
+                    (center_x - distance, center_y - distance),
+                    (center_x - distance, center_y),
+                    (center_x - distance, center_y + distance),
+                    (center_x, center_y - distance),
+                    (center_x, center_y + distance),
+                    (center_x + distance, center_y - distance),
+                    (center_x + distance, center_y),
+                    (center_x + distance, center_y + distance)
+                ]
+
+                # Respawn red squares
+                for red_square in itertools.chain(red_squares_150_150, red_squares_150_450,
+                                                   red_squares_650_150, red_squares_650_450):
+                    red_square.x = red_square.center[0]
+                    red_square.y = red_square.center[1]
+
+                # Respawn orbiting squares
+                for orbiting_square in orbiting_squares:
+                    orbiting_square.x = orbiting_square.center[0] + orbiting_square.radius * math.cos(
+                        math.radians(orbiting_square.angle_offset))
+                    orbiting_square.y = orbiting_square.center[1] + orbiting_square.radius * math.sin(
+                        math.radians(orbiting_square.angle_offset))
+
+            # Check coin collection
+        collected_coins = []
         for coin_pos in coin_positions:
             distance = math.hypot(player.x - coin_pos[0], player.y - coin_pos[1])
             if distance < PLAYER_RADIUS + coin_size // 2:
-                coin_positions.remove(coin_pos)
+                collected_coins.append(coin_pos)
 
-                player.coins += 1
+        # Remove collected coins and update player's coin count
+        for collected_coin in collected_coins:
+            coin_positions.remove(collected_coin)
+            player.coins += 1
 
         screen.fill(LIGHT_BLUE)
 
         level1.draw(screen)
+        for red_square in red_squares_150_150:
+            red_square.update_position()
+            red_square.draw(screen)
+        for red_square in red_squares_150_450:
+            red_square.update_position()
+            red_square.draw(screen)
+        for red_square in red_squares_650_150:
+            red_square.update_position()
+            red_square.draw(screen)
+        for red_square in red_squares_650_450:
+            red_square.update_position()
+            red_square.draw(screen)
+        for orbiting_square in orbiting_squares:
+            orbiting_square.update_position()
+            orbiting_square.draw(screen)
 
         # Draw coins
         for coin_pos in coin_positions:
             coin_rect = coin_image.get_rect(center=coin_pos)
             screen.blit(coin_image, coin_rect)
 
-        for red_square in red_squares_150_150:
-            red_square.update_position()
-            red_square.draw(screen)
-
-        for red_square in red_squares_150_450:
-            red_square.update_position()
-            red_square.draw(screen)
-
-        for red_square in red_squares_650_150:
-            red_square.update_position()
-            red_square.draw(screen)
-
-        for red_square in red_squares_650_450:
-            red_square.update_position()
-            red_square.draw(screen)
-
-        for orbiting_square in orbiting_squares:
-            orbiting_square.update_position()
-            orbiting_square.draw(screen)
-
+        # Draw player
         player.draw(screen)
 
+        # Display attempts, coins, and level information
         attempts_text = font.render("Attempts: {}".format(attempts), True, BLACK)
         text_rect = attempts_text.get_rect(center=(SCREEN_WIDTH // 2, FONT_SIZE))
         screen.blit(attempts_text, text_rect)
