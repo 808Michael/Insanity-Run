@@ -14,14 +14,20 @@ pygame.display.set_caption("Game")
 
 # Set up the colors
 LIGHT_BLUE = (173, 216, 230)  # Light blue color
+BLUE = (100, 149, 200)
 BLACK = (0, 0, 0)
 WHITE = (255, 255, 255)
 GREEN = (0, 255, 0)
 GOLD = (255, 215, 0)  # Gold color
 
 # Global variables
-circle_radius = 25
+circle_radius = 10
 current_level = 1
+coin_count = 0
+attempts = 0
+
+# Define font
+font = pygame.font.SysFont("times new roman", 20)
 
 # Function to generate a random position within the square
 def generate_random_position(square_x, square_y, square_size, coin_size):
@@ -87,9 +93,6 @@ def level_1():
             elif circle_y + circle_radius >= square_y + square_size:
                 circle_y = square_y + square_size - circle_radius
 
-        # Fill the background with light blue
-        window.fill(LIGHT_BLUE)
-
         # Draw the larger white square
         pygame.draw.rect(window, (255, 255, 255), (square_x, square_y, square_size, square_size))
 
@@ -106,6 +109,16 @@ def level_1():
 
         # Draw the gold coin
         pygame.draw.rect(window, GOLD, (coin_x, coin_y, coin_size, coin_size))
+
+        # Display text for coin count, attempts count, and current level
+        coin_text = font.render(f"Coins: {coin_count}", True, BLACK)
+        window.blit(coin_text, (20, 20))
+
+        attempts_text = font.render(f"Attempts: {attempts}", True, BLACK)
+        window.blit(attempts_text, (window_width // 2 - 60, 20))
+
+        level_text = font.render(f"Level: {current_level}/5", True, BLACK)
+        window.blit(level_text, (window_width - 130, 20))
 
         # Update the display
         pygame.display.flip()
@@ -159,9 +172,6 @@ def level_2():
             elif circle_y + circle_radius >= rect_y_level2 + rect_height_level2:
                 circle_y = rect_y_level2 + rect_height_level2 - circle_radius
 
-        # Fill the background with light blue
-        window.fill(LIGHT_BLUE)
-
         # Draw the rectangle for level 2
         pygame.draw.rect(window, (255, 255, 255), (rect_x_level2, rect_y_level2, rect_width_level2, rect_height_level2))
 
@@ -176,8 +186,19 @@ def level_2():
         # Draw the green circle
         pygame.draw.circle(window, GREEN, (circle_x, circle_y), circle_radius)
 
-        # Draw the gold coin for level 2
-        pygame.draw.rect(window, GOLD, (coin_x_level2, coin_y_level2, coin_size, coin_size))
+        # Draw the gold coin for level 2 as a circle
+        pygame.draw.circle(window, GOLD, (coin_x_level2 + coin_size // 2, coin_y_level2 + coin_size // 2),
+                           coin_size // 2)
+
+        # Display text for coin count, attempts count, and current level
+        coin_text = font.render(f"Coins: {coin_count}", True, BLACK)
+        window.blit(coin_text, (20, 20))
+
+        attempts_text = font.render(f"Attempts: {attempts}", True, BLACK)
+        window.blit(attempts_text, (window_width // 2 - 60, 20))
+
+        level_text = font.render(f"Level: {current_level}/5", True, BLACK)
+        window.blit(level_text, (window_width - 130, 20))
 
         # Update the display
         pygame.display.flip()
@@ -234,9 +255,6 @@ def level_3():
             elif circle_y + circle_radius >= rect_y + rect_height:
                 circle_y = rect_y + rect_height - circle_radius
 
-        # Fill the background with light blue
-        window.fill(LIGHT_BLUE)
-
         # Draw the rectangle
         pygame.draw.rect(window, (255, 255, 255), pygame.Rect(rect_x, rect_y, rect_width, rect_height))
 
@@ -251,13 +269,23 @@ def level_3():
         # Draw the green circle
         pygame.draw.circle(window, GREEN, (circle_x, circle_y), circle_radius)
 
-        # Draw the gold coin for level 3 if it's not collected
-        if not coin_collected:
-            pygame.draw.rect(window, GOLD, (coin_x_level3, coin_y_level3, coin_size, coin_size))
+        # Draw the gold coin for level 3 as a circle
+        pygame.draw.circle(window, GOLD, (coin_x_level3 + coin_size // 2, coin_y_level3 + coin_size // 2), coin_size // 2)
+
+        # Display text for coin count, attempts count, and current level
+        coin_text = font.render(f"Coins: {coin_count}", True, BLACK)
+        window.blit(coin_text, (20, 20))
+
+        attempts_text = font.render(f"Attempts: {attempts}", True, BLACK)
+        window.blit(attempts_text, (window_width // 2 - 60, 20))
+
+        level_text = font.render(f"Level: {current_level}/5", True, BLACK)
+        window.blit(level_text, (window_width - 130, 20))
 
         # Update the display
         pygame.display.flip()
 
+# Level 4
 def level_4():
     global circle_x, circle_y, circle_radius, current_level, coin_x_level4, coin_y_level4, coin_collected
     # Set up level 4
@@ -273,9 +301,9 @@ def level_4():
     rect_y = (window_height - rect_height) // 2  # Center the rectangle vertically
 
     # Set up the gold coin for level 4
-    coin_size = 20
-    coin_x_level4 = 400
-    coin_y_level4 = 200
+    coin_radius = 10  # Adjust the radius to make it smaller than the circle
+    coin_x_level4 = 200
+    coin_y_level4 = 300
     coin_collected = False
 
     # Main loop for level 4
@@ -290,8 +318,8 @@ def level_4():
         circle_x, circle_y = handle_key_presses(circle_x, circle_y, circle_speed)
 
         # Check for collision with the gold coin
-        if not coin_collected and circle_x + circle_radius > coin_x_level4 and circle_x - circle_radius < coin_x_level4 + coin_size \
-                and circle_y + circle_radius > coin_y_level4 and circle_y - circle_radius < coin_y_level4 + coin_size:
+        if not coin_collected and circle_x + circle_radius > coin_x_level4 and circle_x - circle_radius < coin_x_level4 + coin_radius \
+                and circle_y + circle_radius > coin_y_level4 and circle_y - circle_radius < coin_y_level4 + coin_radius:
             coin_collected = True
             # Transition to level 5 when the coin is collected
             current_level = 5
@@ -309,9 +337,6 @@ def level_4():
             elif circle_y + circle_radius >= rect_y + rect_height:
                 circle_y = rect_y + rect_height - circle_radius
 
-        # Fill the background with light blue
-        window.fill(LIGHT_BLUE)
-
         # Draw the rectangle
         pygame.draw.rect(window, (255, 255, 255), pygame.Rect(rect_x, rect_y, rect_width, rect_height))
 
@@ -328,10 +353,21 @@ def level_4():
 
         # Draw the gold coin for level 4 if it's not collected
         if not coin_collected:
-            pygame.draw.rect(window, GOLD, (coin_x_level4, coin_y_level4, coin_size, coin_size))
+            pygame.draw.circle(window, GOLD, (coin_x_level4, coin_y_level4), coin_radius)
+
+            # Display text for coin count, attempts count, and current level
+            coin_text = font.render(f"Coins: {coin_count}", True, BLACK)
+            window.blit(coin_text, (20, 20))
+
+            attempts_text = font.render(f"Attempts: {attempts}", True, BLACK)
+            window.blit(attempts_text, (window_width // 2 - 60, 20))
+
+            level_text = font.render(f"Level: {current_level}/5", True, BLACK)
+            window.blit(level_text, (window_width - 130, 20))
 
         # Update the display
         pygame.display.flip()
+
 
 # Level 5
 def level_5():
@@ -344,12 +380,12 @@ def level_5():
 
     # Position and size of the rectangle for Level 5
     rect_width = 400
-    rect_height = 550
+    rect_height = 500
     rect_x = (window_width - rect_width) // 2  # Center the rectangle horizontally
     rect_y = (window_height - rect_height) // 2  # Center the rectangle vertically
 
     # Set up the gold coin for level 5
-    coin_size = 20
+    coin_radius = 10  # Adjust the radius to make it smaller than the circle
     coin_x_level5 = 400
     coin_y_level5 = 400
     coin_collected = False
@@ -366,11 +402,9 @@ def level_5():
         circle_x, circle_y = handle_key_presses(circle_x, circle_y, circle_speed)
 
         # Check for collision with the gold coin
-        if not coin_collected:
-            if circle_x + circle_radius > coin_x_level5 and circle_x - circle_radius < coin_x_level5 + coin_size \
-                    and circle_y + circle_radius > coin_y_level5 and circle_y - circle_radius < coin_y_level5 + coin_size:
-                print("Coin collected!")
-                coin_collected = True
+        if not coin_collected and circle_x + circle_radius > coin_x_level5 and circle_x - circle_radius < coin_x_level5 + coin_radius \
+                and circle_y + circle_radius > coin_y_level5 and circle_y - circle_radius < coin_y_level5 + coin_radius:
+            coin_collected = True
 
         # Check for collision with black lines
         if not coin_collected:
@@ -385,9 +419,6 @@ def level_5():
                     circle_y = rect_y + circle_radius
                 elif circle_y + circle_radius >= rect_y + rect_height:
                     circle_y = rect_y + rect_height - circle_radius
-
-        # Fill the background with light blue
-        window.fill(LIGHT_BLUE)
 
         # Draw the rectangle for Level 5
         pygame.draw.rect(window, (255, 255, 255), pygame.Rect(rect_x, rect_y, rect_width, rect_height))
@@ -405,7 +436,18 @@ def level_5():
 
         # Draw the gold coin for level 5 if it's not collected
         if not coin_collected:
-            pygame.draw.rect(window, GOLD, (coin_x_level5, coin_y_level5, coin_size, coin_size))
+            pygame.draw.circle(window, GOLD, (coin_x_level5, coin_y_level5), coin_radius)
+
+            # Display text for coin count, attempts count, and current level
+            coin_text = font.render(f"Coins: {coin_count}", True, BLACK)
+            window.blit(coin_text, (20, 20))
+
+            attempts_text = font.render(f"Attempts: {attempts}", True, BLACK)
+            window.blit(attempts_text, (window_width // 2 - 60, 20))
+
+            level_text = font.render(f"Level: {current_level}/5", True, BLACK)
+            window.blit(level_text, (window_width - 130, 20))
+
         else:
             # Call the victory_screen function
             victory_screen()
@@ -421,7 +463,7 @@ def victory_screen():
 
     # Display "You Win!" message
     font = pygame.font.Font(None, 36)
-    text = font.render("You Win!", True, WHITE)
+    text = font.render("You Win!", True, BLACK)
     text_rect = text.get_rect(center=(window_width // 2, window_height // 2 - 50))
     window.blit(text, text_rect)
 
@@ -472,6 +514,9 @@ def reset_levels():
 
 # Main game loop
 while True:
+    # Fill the background with light blue
+    window.fill(LIGHT_BLUE)
+
     if current_level == 1:
         level_1()
     elif current_level == 2:
@@ -482,9 +527,12 @@ while True:
         level_4()
     elif current_level == 5:
         level_5()
-    elif current_level == "victory screen":
-        victory_screen()
 
-# Quit Pygame
-pygame.quit()
-sys.exit()
+    # Update the display
+    pygame.display.flip()
+
+    # Event handling for quitting the game
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            pygame.quit()
+            sys.exit()
