@@ -1,397 +1,490 @@
 import pygame
 import sys
+import random
 import math
-import pygame.time
-import itertools
-from pygame.locals import *
 
-# Constants for the screen
-SCREEN_WIDTH = 800
-SCREEN_HEIGHT = 600
-LIGHT_BLUE = (173, 216, 250)
-BLUE = (100, 149, 200)
-WHITE = (255, 255, 255)
+# Initialize Pygame
+pygame.init()
+
+# Set up the window
+window_width = 800
+window_height = 600
+window = pygame.display.set_mode((window_width, window_height))
+pygame.display.set_caption("Game")
+
+# Set up the colors
+LIGHT_BLUE = (173, 216, 230)  # Light blue color
 BLACK = (0, 0, 0)
+WHITE = (255, 255, 255)
 GREEN = (0, 255, 0)
-RED = (255, 0, 0)
-FONT_SIZE = 24
+GOLD = (255, 215, 0)  # Gold color
 
-# Player settings
-PLAYER_RADIUS = 10
-PLAYER_SPEED = 5
+# Global variables
+circle_radius = 25
+current_level = 1
 
+# Function to generate a random position within the square
+def generate_random_position(square_x, square_y, square_size, coin_size):
+    return random.randint(square_x, square_x + square_size - coin_size), random.randint(square_y, square_y + square_size - coin_size)
 
-class Player:
-    def __init__(self, x, y):
-        self.x = x
-        self.y = y
-        self.radius = PLAYER_RADIUS
-        self.coins = 0
+# Function to handle key presses
+def handle_key_presses(circle_x, circle_y, circle_speed, rect_x=None, rect_y=None, rect_width=None, rect_height=None):
+    keys = pygame.key.get_pressed()
+    if keys[pygame.K_LEFT] and (rect_x is None or circle_x - circle_speed > rect_x):
+        circle_x -= circle_speed
+    if keys[pygame.K_RIGHT] and (rect_x is None or circle_x + circle_speed < rect_x + rect_width):
+        circle_x += circle_speed
+    if keys[pygame.K_UP] and (rect_y is None or circle_y - circle_speed > rect_y):
+        circle_y -= circle_speed
+    if keys[pygame.K_DOWN] and (rect_y is None or circle_y + circle_speed < rect_y + rect_height):
+        circle_y += circle_speed
+    return circle_x, circle_y
 
-    def draw(self, screen):
-        pygame.draw.circle(screen, GREEN, (self.x, self.y), self.radius)
+# Level 1
+def level_1():
+    global circle_x, circle_y, coin_x, coin_y, circle_radius, current_level
+    # Set up the square
+    square_size = 500
+    square_x = 150
+    square_y = 50
 
-    def move(self, dx, dy, level_lines):
-        new_x = self.x + dx
-        new_y = self.y + dy
+    # Set up the circle
+    circle_x = window_width // 2
+    circle_y = window_height // 2
+    circle_speed = 0.25
 
-        for line in level_lines:
-            if self._is_colliding_with_line((self.x, self.y), (new_x, new_y), line):
-                return
+    # Set up the gold coin
+    coin_size = 20
+    coin_x, coin_y = generate_random_position(square_x, square_y, square_size, coin_size)
 
-        self.x = new_x
-        self.y = new_y
-
-    def _is_colliding_with_line(self, start, end, line):
-        x1, y1 = start
-        x2, y2 = end
-        x3, y3 = line[0]
-        x4, y4 = line[1]
-        denominator = ((y4 - y3) * (x2 - x1)) - ((x4 - x3) * (y2 - y1))
-
-        if denominator == 0:
-
-            return False
-        ua = (((x4 - x3) * (y1 - y3)) - ((y4 - y3) * (x1 - x3))) / denominator
-        ub = (((x2 - x1) * (y1 - y3)) - ((y2 - y1) * (x1 - x3))) / denominator
-        if 0 <= ua <= 1 and 0 <= ub <= 1:
-            return True
-        return False
-
-
-class Level1:
-    def __init__(self):
-        self.top_line = [(100, 100), (700, 100)]
-        self.bottom_line = [(100, 500), (700, 500)]
-        self.square_left = [(50, 250), (100, 250), (100, 350), (50, 350)]
-        self.square_right = [(750, 250), (700, 250), (700, 350), (750, 350)]
-
-    def draw(self, screen):
-        pygame.draw.line(screen, BLACK, self.top_line[0], self.top_line[1], 8)
-        pygame.draw.line(screen, BLACK, self.bottom_line[0], self.bottom_line[1], 8)
-        pygame.draw.line(screen, BLACK, self.square_left[0], self.square_left[1], 8)
-        pygame.draw.line(screen, BLACK, self.square_left[2], self.square_left[3], 8)
-        pygame.draw.line(screen, BLACK, self.square_left[3], self.square_left[0], 8)
-        pygame.draw.line(screen, BLACK, self.square_right[0], self.square_right[1], 8)
-        pygame.draw.line(screen, BLACK, self.square_right[2], self.square_right[3], 8)
-        pygame.draw.line(screen, BLACK, self.square_right[3], self.square_right[0], 8)
-        pygame.draw.line(screen, BLACK, (100, 100), (100, 250), 8)
-        pygame.draw.line(screen, BLACK, (100, 500), (100, 350), 8)
-        pygame.draw.line(screen, BLACK, (700, 100), (700, 250), 8)
-        pygame.draw.line(screen, BLACK, (700, 500), (700, 350), 8)
-        pygame.draw.polygon(screen, WHITE, [
-            self.top_line[0], self.top_line[1],
-            self.bottom_line[1], self.bottom_line[0],
-        ], 0)
-        pygame.draw.polygon(screen, BLUE, self.square_left, 0)
-        pygame.draw.polygon(screen, BLUE, self.square_right, 0)
-
-    def get_line_rects(self):
-        rects = []
-        rects.append(pygame.Rect(self.top_line[0], (self.top_line[1][0] - self.top_line[0][0], 8)))
-        rects.append(pygame.Rect(self.bottom_line[0], (self.bottom_line[1][0] - self.bottom_line[0][0], 8)))
-        rects.append(pygame.Rect(self.square_left[0], (50, 100)))
-        rects.append(pygame.Rect(self.square_right[1], (50, 100)))
-        return rects
-
-
-class RedSquare:
-    def __init__(self, center, angle_offset, radius):
-        self.center = center
-        self.angle_offset = angle_offset
-        self.radius = radius
-        self.angle = 0
-        self.x = center[0]
-        self.y = center[1]
-
-    def update_position(self):
-        self.angle += 2
-        self.angle %= 360
-        self.x = self.center[0] + self.radius * math.cos(math.radians(self.angle + self.angle_offset))
-        self.y = self.center[1] + self.radius * math.sin(math.radians(self.angle + self.angle_offset))
-
-    def draw(self, screen):
-        pygame.draw.rect(screen, RED, (self.x - 5, self.y - 5, 10, 10))
-
-
-class OrbitingSquare:
-    def __init__(self, center, angle_offset, radius):
-        self.center = center
-        self.angle_offset = angle_offset
-        self.radius = radius
-        self.angle = 0
-        self.x = center[0] + radius * math.cos(math.radians(angle_offset))  # Initialize x position
-        self.y = center[1] + radius * math.sin(math.radians(angle_offset))  # Initialize y position
-        self.last_update_time = pygame.time.get_ticks()
-
-    def update_position(self):
-        current_time = pygame.time.get_ticks()
-        elapsed_time = current_time - self.last_update_time
-        self.last_update_time = current_time
-
-        angle_increment = (elapsed_time / 1000) * 150
-
-        self.angle += angle_increment
-        self.angle %= 360
-        self.x = self.center[0] + self.radius * math.cos(math.radians(self.angle + self.angle_offset))
-        self.y = self.center[1] + self.radius * math.sin(math.radians(self.angle + self.angle_offset))
-
-    def draw(self, screen):
-        pygame.draw.rect(screen, RED, (self.x - 5, self.y - 5, 10, 10))
-
-
-def main():
-    pygame.init()
-    screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
-    pygame.display.set_caption("Insanity Run")
-
-    clock = pygame.time.Clock()
-
-    level1 = Level1()
-    player = Player(75, 300)
-
-    pygame.mixer.init()
-
-    pygame.mixer.music.load('mp3/535331_Stay-Inside-Me.mp3')
-
-    pygame.mixer.music.play(loops=-1)
-
-    death_sound = pygame.mixer.Sound("mp3/geometry-dash-death-sound-effect.mp3")
-
-    attempts = 0
-    current_level = 1
-    total_levels = 5
-
-    font = pygame.font.Font(None, FONT_SIZE)
-
-    coin_size = 10
-    coin_image = pygame.Surface((coin_size, coin_size), pygame.SRCALPHA)
-    pygame.draw.circle(coin_image, (255, 215, 0), (coin_size // 2, coin_size // 2), coin_size // 2)
-
-    center_x = SCREEN_WIDTH // 2
-    center_y = SCREEN_HEIGHT // 2
-    distance_multiplier = 1.5
-    distance = int(coin_size * distance_multiplier)
-
-    coin_positions = [
-        (center_x, center_y),
-        (150, 150),
-        (650, 150),
-        (150, 450),
-        (650, 450),
-        (center_x - distance, center_y - distance),
-        (center_x - distance, center_y),
-        (center_x - distance, center_y + distance),
-        (center_x, center_y - distance),
-        (center_x, center_y + distance),
-        (center_x + distance, center_y - distance),
-        (center_x + distance, center_y),
-        (center_x + distance, center_y + distance)
-    ]
-
-    red_squares_150_150 = []
-    red_squares_150_450 = []
-    red_squares_650_150 = []
-    red_squares_650_450 = []
-
-    for i in range(4):
-        angle_offset = i * 90
-        red_square = RedSquare((150, 150), angle_offset, 50)
-        red_squares_150_150.append(red_square)
-
-    for i in range(4):
-        angle_offset = i * 90
-        red_square = RedSquare((150, 450), angle_offset, 50)
-        red_squares_150_450.append(red_square)
-
-    for i in range(4):
-        angle_offset = i * 90
-        red_square = RedSquare((650, 150), angle_offset, 50)
-        red_squares_650_150.append(red_square)
-
-    for i in range(4):
-        angle_offset = i * 90
-        red_square = RedSquare((650, 450), angle_offset, 50)
-        red_squares_650_450.append(red_square)
-
-    orbiting_squares = []
-    for i in range(8):
-        angle_offset = i * 45
-        orbiting_square = OrbitingSquare((400, 300), angle_offset, 100)
-        orbiting_squares.append(orbiting_square)
-
-    while True:
+    # Main loop
+    while current_level == 1:
+        # Event handling
         for event in pygame.event.get():
-            if event.type == QUIT:
+            if event.type == pygame.QUIT:
                 pygame.quit()
                 sys.exit()
 
-        keys = pygame.key.get_pressed()
-        dx = 0
-        dy = 0
-        if keys[K_LEFT]:
-            dx = -PLAYER_SPEED
-        if keys[K_RIGHT]:
-            dx = PLAYER_SPEED
-        if keys[K_UP]:
-            dy = -PLAYER_SPEED
-        if keys[K_DOWN]:
-            dy = PLAYER_SPEED
+        # Handle key presses
+        circle_x, circle_y = handle_key_presses(circle_x, circle_y, circle_speed, square_x, square_y, square_size, square_size)
 
-        level_lines = [
-            (level1.top_line[0], level1.top_line[1]),
-            (level1.bottom_line[0], level1.bottom_line[1]),
-            ((100, 100), (100, 250)),
-            ((100, 500), (100, 350)),
-            ((700, 100), (700, 250)),
-            ((700, 500), (700, 350)),
-            (level1.square_left[0], level1.square_left[1]),
-            (level1.square_left[2], level1.square_left[3]),
-            (level1.square_left[3], level1.square_left[0]),
-            (level1.square_right[0], level1.square_right[1]),
-            (level1.square_right[2], level1.square_right[3]),
-            (level1.square_right[3], level1.square_right[0]),
-        ]
+        # Check for collision with the gold coin
+        if circle_x + circle_radius > coin_x and circle_x - circle_radius < coin_x + coin_size \
+                and circle_y + circle_radius > coin_y and circle_y - circle_radius < coin_y + coin_size:
+            # Transition to level 2
+            current_level = 2
 
-        player.move(dx, dy, level_lines)
+        # Check for collision with black lines
+        if (circle_x - circle_radius <= square_x or circle_x + circle_radius >= square_x + square_size or
+                circle_y - circle_radius <= square_y or circle_y + circle_radius >= square_y + square_size):
+            # Prevent movement in the collided direction
+            if circle_x - circle_radius <= square_x:
+                circle_x = square_x + circle_radius
+            elif circle_x + circle_radius >= square_x + square_size:
+                circle_x = square_x + square_size - circle_radius
+            if circle_y - circle_radius <= square_y:
+                circle_y = square_y + circle_radius
+            elif circle_y + circle_radius >= square_y + square_size:
+                circle_y = square_y + square_size - circle_radius
 
-        # Check collision with red squares
-        for red_square_group in [red_squares_150_150, red_squares_150_450, red_squares_650_150, red_squares_650_450]:
-            for red_square in red_square_group:
-                distance = math.hypot(player.x - red_square.x, player.y - red_square.y)
-                if distance < PLAYER_RADIUS + 5:
-                    player.x = 75
-                    player.y = 300
-                    attempts += 1
-                    death_sound.play()
+        # Fill the background with light blue
+        window.fill(LIGHT_BLUE)
 
-                    # Reset coins
-                    player.coins = 0
+        # Draw the larger white square
+        pygame.draw.rect(window, (255, 255, 255), (square_x, square_y, square_size, square_size))
 
-                    # Respawn coins
-                    coin_positions = [
-                        (center_x, center_y),
-                        (150, 150),
-                        (650, 150),
-                        (150, 450),
-                        (650, 450),
-                        (center_x - distance, center_y - distance),
-                        (center_x - distance, center_y),
-                        (center_x - distance, center_y + distance),
-                        (center_x, center_y - distance),
-                        (center_x, center_y + distance),
-                        (center_x + distance, center_y - distance),
-                        (center_x + distance, center_y),
-                        (center_x + distance, center_y + distance)
-                    ]
+        # Draw black lines on the perimeter of the white square
+        pygame.draw.line(window, BLACK, (square_x, square_y), (square_x + square_size, square_y), 3)  # Top line
+        pygame.draw.line(window, BLACK, (square_x, square_y), (square_x, square_y + square_size), 3)  # Left line
+        pygame.draw.line(window, BLACK, (square_x + square_size, square_y),
+                         (square_x + square_size, square_y + square_size), 3)  # Right line
+        pygame.draw.line(window, BLACK, (square_x, square_y + square_size),
+                         (square_x + square_size, square_y + square_size), 3)  # Bottom line
 
-                    # Respawn red squares
-                    for red_square in red_square_group:
-                        red_square.x = red_square.center[0]
-                        red_square.y = red_square.center[1]
+        # Draw the green circle
+        pygame.draw.circle(window, GREEN, (circle_x, circle_y), circle_radius)
 
-                    # Respawn orbiting squares
-                    for orbiting_square in orbiting_squares:
-                        orbiting_square.x = orbiting_square.center[0] + orbiting_square.radius * math.cos(
-                            math.radians(orbiting_square.angle_offset))
-                        orbiting_square.y = orbiting_square.center[1] + orbiting_square.radius * math.sin(
-                            math.radians(orbiting_square.angle_offset))
+        # Draw the gold coin
+        pygame.draw.rect(window, GOLD, (coin_x, coin_y, coin_size, coin_size))
 
-        for orbiting_square in orbiting_squares:
-            distance = math.hypot(player.x - orbiting_square.x, player.y - orbiting_square.y)
-            if distance < PLAYER_RADIUS + 5:
-                player.x = 75
-                player.y = 300
-                attempts += 1
-                death_sound.play()
-
-                # Reset coins
-                player.coins = 0
-
-                # Respawn coins
-                coin_positions = [
-                    (center_x, center_y),
-                    (150, 150),
-                    (650, 150),
-                    (150, 450),
-                    (650, 450),
-                    (center_x - distance, center_y - distance),
-                    (center_x - distance, center_y),
-                    (center_x - distance, center_y + distance),
-                    (center_x, center_y - distance),
-                    (center_x, center_y + distance),
-                    (center_x + distance, center_y - distance),
-                    (center_x + distance, center_y),
-                    (center_x + distance, center_y + distance)
-                ]
-
-                # Respawn red squares
-                for red_square in itertools.chain(red_squares_150_150, red_squares_150_450,
-                                                   red_squares_650_150, red_squares_650_450):
-                    red_square.x = red_square.center[0]
-                    red_square.y = red_square.center[1]
-
-                # Respawn orbiting squares
-                for orbiting_square in orbiting_squares:
-                    orbiting_square.x = orbiting_square.center[0] + orbiting_square.radius * math.cos(
-                        math.radians(orbiting_square.angle_offset))
-                    orbiting_square.y = orbiting_square.center[1] + orbiting_square.radius * math.sin(
-                        math.radians(orbiting_square.angle_offset))
-
-            # Check coin collection
-        collected_coins = []
-        for coin_pos in coin_positions:
-            distance = math.hypot(player.x - coin_pos[0], player.y - coin_pos[1])
-            if distance < PLAYER_RADIUS + coin_size // 2:
-                collected_coins.append(coin_pos)
-
-        # Remove collected coins and update player's coin count
-        for collected_coin in collected_coins:
-            coin_positions.remove(collected_coin)
-            player.coins += 1
-
-        screen.fill(LIGHT_BLUE)
-
-        level1.draw(screen)
-        for red_square in red_squares_150_150:
-            red_square.update_position()
-            red_square.draw(screen)
-        for red_square in red_squares_150_450:
-            red_square.update_position()
-            red_square.draw(screen)
-        for red_square in red_squares_650_150:
-            red_square.update_position()
-            red_square.draw(screen)
-        for red_square in red_squares_650_450:
-            red_square.update_position()
-            red_square.draw(screen)
-        for orbiting_square in orbiting_squares:
-            orbiting_square.update_position()
-            orbiting_square.draw(screen)
-
-        # Draw coins
-        for coin_pos in coin_positions:
-            coin_rect = coin_image.get_rect(center=coin_pos)
-            screen.blit(coin_image, coin_rect)
-
-        # Draw player
-        player.draw(screen)
-
-        # Display attempts, coins, and level information
-        attempts_text = font.render("Attempts: {}".format(attempts), True, BLACK)
-        text_rect = attempts_text.get_rect(center=(SCREEN_WIDTH // 2, FONT_SIZE))
-        screen.blit(attempts_text, text_rect)
-
-        coins_text = font.render("Coins: {}".format(player.coins), True, BLACK)
-        screen.blit(coins_text, (10, 10))
-
-        level_text = font.render("Level {}/{}".format(current_level, total_levels), True, BLACK)
-        level_rect = level_text.get_rect(topright=(SCREEN_WIDTH - 10, 10))
-        screen.blit(level_text, level_rect)
-
+        # Update the display
         pygame.display.flip()
-        clock.tick(60)
+
+# Level 2
+def level_2():
+    global circle_x, circle_y, circle_radius, current_level, coin_x_level2, coin_y_level2
+    # Set up level 2
+    rect_width_level2 = 600
+    rect_height_level2 = 400
+    rect_x_level2 = (window_width - rect_width_level2) // 2
+    rect_y_level2 = (window_height - rect_height_level2) // 2
+
+    # Set up the circle
+    circle_x = window_width // 2
+    circle_y = window_height // 2
+    circle_speed = 0.25
+
+    # Set up the gold coin for level 2
+    coin_size = 20
+    coin_x_level2 = 200
+    coin_y_level2 = 200
+
+    # Main loop for level 2
+    while current_level == 2:
+        # Event handling
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
+
+        # Handle key presses and collision with rectangle
+        circle_x, circle_y = handle_key_presses(circle_x, circle_y, circle_speed, rect_x_level2, rect_y_level2, rect_width_level2, rect_height_level2)
+
+        # Check for collision with the gold coin
+        if circle_x + circle_radius > coin_x_level2 and circle_x - circle_radius < coin_x_level2 + coin_size \
+                and circle_y + circle_radius > coin_y_level2 and circle_y - circle_radius < coin_y_level2 + coin_size:
+            # Transition to level 3
+            current_level = 3
+
+        # Check for collision with black lines
+        if (circle_x - circle_radius <= rect_x_level2 or circle_x + circle_radius >= rect_x_level2 + rect_width_level2 or
+                circle_y - circle_radius <= rect_y_level2 or circle_y + circle_radius >= rect_y_level2 + rect_height_level2):
+            # Prevent movement in the collided direction
+            if circle_x - circle_radius <= rect_x_level2:
+                circle_x = rect_x_level2 + circle_radius
+            elif circle_x + circle_radius >= rect_x_level2 + rect_width_level2:
+                circle_x = rect_x_level2 + rect_width_level2 - circle_radius
+            if circle_y - circle_radius <= rect_y_level2:
+                circle_y = rect_y_level2 + circle_radius
+            elif circle_y + circle_radius >= rect_y_level2 + rect_height_level2:
+                circle_y = rect_y_level2 + rect_height_level2 - circle_radius
+
+        # Fill the background with light blue
+        window.fill(LIGHT_BLUE)
+
+        # Draw the rectangle for level 2
+        pygame.draw.rect(window, (255, 255, 255), (rect_x_level2, rect_y_level2, rect_width_level2, rect_height_level2))
+
+        # Draw black lines on the perimeter of the rectangle
+        pygame.draw.line(window, BLACK, (rect_x_level2, rect_y_level2), (rect_x_level2 + rect_width_level2, rect_y_level2), 3)  # Top line
+        pygame.draw.line(window, BLACK, (rect_x_level2, rect_y_level2), (rect_x_level2, rect_y_level2 + rect_height_level2), 3)  # Left line
+        pygame.draw.line(window, BLACK, (rect_x_level2 + rect_width_level2, rect_y_level2),
+                         (rect_x_level2 + rect_width_level2, rect_y_level2 + rect_height_level2), 3)  # Right line
+        pygame.draw.line(window, BLACK, (rect_x_level2, rect_y_level2 + rect_height_level2),
+                         (rect_x_level2 + rect_width_level2, rect_y_level2 + rect_height_level2), 3)  # Bottom line
+
+        # Draw the green circle
+        pygame.draw.circle(window, GREEN, (circle_x, circle_y), circle_radius)
+
+        # Draw the gold coin for level 2
+        pygame.draw.rect(window, GOLD, (coin_x_level2, coin_y_level2, coin_size, coin_size))
+
+        # Update the display
+        pygame.display.flip()
+
+# Level 3
+def level_3():
+    global circle_x, circle_y, circle_radius, current_level, coin_x_level3, coin_y_level3, coin_collected
+    # Set up level 3
+    # Set up the circle
+    circle_x = window_width // 2
+    circle_y = window_height // 2
+    circle_speed = 0.25
+
+    # Position and size of the rectangle
+    rect_width = 300
+    rect_height = 500
+    rect_x = (window_width - rect_width) // 2  # Center the rectangle horizontally
+    rect_y = (window_height - rect_height) // 2  # Center the rectangle vertically
+
+    # Set up the gold coin for level 3
+    coin_size = 20
+    coin_x_level3 = 400
+    coin_y_level3 = 400
+    coin_collected = False
+
+    # Main loop for level 3
+    while current_level == 3:
+        # Event handling
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
+
+        # Handle key presses
+        circle_x, circle_y = handle_key_presses(circle_x, circle_y, circle_speed)
+
+        # Check for collision with the gold coin
+        if not coin_collected and circle_x + circle_radius > coin_x_level3 and circle_x - circle_radius < coin_x_level3 + coin_size \
+                and circle_y + circle_radius > coin_y_level3 and circle_y - circle_radius < coin_y_level3 + coin_size:
+            coin_collected = True
+            # Transition to level 4
+            current_level = 4
+
+        # Check for collision with black lines
+        if (circle_x - circle_radius <= rect_x or circle_x + circle_radius >= rect_x + rect_width or
+                circle_y - circle_radius <= rect_y or circle_y + circle_radius >= rect_y + rect_height):
+            # Prevent movement in the collided direction
+            if circle_x - circle_radius <= rect_x:
+                circle_x = rect_x + circle_radius
+            elif circle_x + circle_radius >= rect_x + rect_width:
+                circle_x = rect_x + rect_width - circle_radius
+            if circle_y - circle_radius <= rect_y:
+                circle_y = rect_y + circle_radius
+            elif circle_y + circle_radius >= rect_y + rect_height:
+                circle_y = rect_y + rect_height - circle_radius
+
+        # Fill the background with light blue
+        window.fill(LIGHT_BLUE)
+
+        # Draw the rectangle
+        pygame.draw.rect(window, (255, 255, 255), pygame.Rect(rect_x, rect_y, rect_width, rect_height))
+
+        # Draw black lines around the rectangle
+        pygame.draw.line(window, BLACK, (rect_x, rect_y), (rect_x + rect_width, rect_y), 3)  # Top line
+        pygame.draw.line(window, BLACK, (rect_x, rect_y), (rect_x, rect_y + rect_height), 3)  # Left line
+        pygame.draw.line(window, BLACK, (rect_x + rect_width, rect_y),
+                         (rect_x + rect_width, rect_y + rect_height), 3)  # Right line
+        pygame.draw.line(window, BLACK, (rect_x, rect_y + rect_height),
+                         (rect_x + rect_width, rect_y + rect_height), 3)  # Bottom line
+
+        # Draw the green circle
+        pygame.draw.circle(window, GREEN, (circle_x, circle_y), circle_radius)
+
+        # Draw the gold coin for level 3 if it's not collected
+        if not coin_collected:
+            pygame.draw.rect(window, GOLD, (coin_x_level3, coin_y_level3, coin_size, coin_size))
+
+        # Update the display
+        pygame.display.flip()
+
+def level_4():
+    global circle_x, circle_y, circle_radius, current_level, coin_x_level4, coin_y_level4, coin_collected
+    # Set up level 4
+    # Set up the circle
+    circle_x = window_width // 2
+    circle_y = window_height // 2
+    circle_speed = 0.25
+
+    # Position and size of the rectangle
+    rect_width = 700
+    rect_height = 200
+    rect_x = (window_width - rect_width) // 2  # Center the rectangle horizontally
+    rect_y = (window_height - rect_height) // 2  # Center the rectangle vertically
+
+    # Set up the gold coin for level 4
+    coin_size = 20
+    coin_x_level4 = 400
+    coin_y_level4 = 200
+    coin_collected = False
+
+    # Main loop for level 4
+    while current_level == 4:
+        # Event handling
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
+
+        # Handle key presses
+        circle_x, circle_y = handle_key_presses(circle_x, circle_y, circle_speed)
+
+        # Check for collision with the gold coin
+        if not coin_collected and circle_x + circle_radius > coin_x_level4 and circle_x - circle_radius < coin_x_level4 + coin_size \
+                and circle_y + circle_radius > coin_y_level4 and circle_y - circle_radius < coin_y_level4 + coin_size:
+            coin_collected = True
+            # Transition to level 5 when the coin is collected
+            current_level = 5
+
+        # Check for collision with black lines
+        if (circle_x - circle_radius <= rect_x or circle_x + circle_radius >= rect_x + rect_width or
+                circle_y - circle_radius <= rect_y or circle_y + circle_radius >= rect_y + rect_height):
+            # Prevent movement in the collided direction
+            if circle_x - circle_radius <= rect_x:
+                circle_x = rect_x + circle_radius
+            elif circle_x + circle_radius >= rect_x + rect_width:
+                circle_x = rect_x + rect_width - circle_radius
+            if circle_y - circle_radius <= rect_y:
+                circle_y = rect_y + circle_radius
+            elif circle_y + circle_radius >= rect_y + rect_height:
+                circle_y = rect_y + rect_height - circle_radius
+
+        # Fill the background with light blue
+        window.fill(LIGHT_BLUE)
+
+        # Draw the rectangle
+        pygame.draw.rect(window, (255, 255, 255), pygame.Rect(rect_x, rect_y, rect_width, rect_height))
+
+        # Draw black lines around the rectangle
+        pygame.draw.line(window, BLACK, (rect_x, rect_y), (rect_x + rect_width, rect_y), 3)  # Top line
+        pygame.draw.line(window, BLACK, (rect_x, rect_y), (rect_x, rect_y + rect_height), 3)  # Left line
+        pygame.draw.line(window, BLACK, (rect_x + rect_width, rect_y),
+                         (rect_x + rect_width, rect_y + rect_height), 3)  # Right line
+        pygame.draw.line(window, BLACK, (rect_x, rect_y + rect_height),
+                         (rect_x + rect_width, rect_y + rect_height), 3)  # Bottom line
+
+        # Draw the green circle
+        pygame.draw.circle(window, GREEN, (circle_x, circle_y), circle_radius)
+
+        # Draw the gold coin for level 4 if it's not collected
+        if not coin_collected:
+            pygame.draw.rect(window, GOLD, (coin_x_level4, coin_y_level4, coin_size, coin_size))
+
+        # Update the display
+        pygame.display.flip()
+
+# Level 5
+def level_5():
+    global circle_x, circle_y, circle_radius, current_level, coin_x_level5, coin_y_level5, coin_collected
+    # Set up level 5
+    # Set up the circle
+    circle_x = window_width // 2
+    circle_y = window_height // 2
+    circle_speed = 0.25
+
+    # Position and size of the rectangle for Level 5
+    rect_width = 400
+    rect_height = 550
+    rect_x = (window_width - rect_width) // 2  # Center the rectangle horizontally
+    rect_y = (window_height - rect_height) // 2  # Center the rectangle vertically
+
+    # Set up the gold coin for level 5
+    coin_size = 20
+    coin_x_level5 = 400
+    coin_y_level5 = 400
+    coin_collected = False
+
+    # Main loop for level 5
+    while current_level == 5:
+        # Event handling
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
+
+        # Handle key presses
+        circle_x, circle_y = handle_key_presses(circle_x, circle_y, circle_speed)
+
+        # Check for collision with the gold coin
+        if not coin_collected:
+            if circle_x + circle_radius > coin_x_level5 and circle_x - circle_radius < coin_x_level5 + coin_size \
+                    and circle_y + circle_radius > coin_y_level5 and circle_y - circle_radius < coin_y_level5 + coin_size:
+                print("Coin collected!")
+                coin_collected = True
+
+        # Check for collision with black lines
+        if not coin_collected:
+            if (circle_x - circle_radius <= rect_x or circle_x + circle_radius >= rect_x + rect_width or
+                    circle_y - circle_radius <= rect_y or circle_y + circle_radius >= rect_y + rect_height):
+                # Prevent movement in the collided direction
+                if circle_x - circle_radius <= rect_x:
+                    circle_x = rect_x + circle_radius
+                elif circle_x + circle_radius >= rect_x + rect_width:
+                    circle_x = rect_x + rect_width - circle_radius
+                if circle_y - circle_radius <= rect_y:
+                    circle_y = rect_y + circle_radius
+                elif circle_y + circle_radius >= rect_y + rect_height:
+                    circle_y = rect_y + rect_height - circle_radius
+
+        # Fill the background with light blue
+        window.fill(LIGHT_BLUE)
+
+        # Draw the rectangle for Level 5
+        pygame.draw.rect(window, (255, 255, 255), pygame.Rect(rect_x, rect_y, rect_width, rect_height))
+
+        # Draw black lines around the rectangle for Level 5
+        pygame.draw.line(window, BLACK, (rect_x, rect_y), (rect_x + rect_width, rect_y), 3)  # Top line
+        pygame.draw.line(window, BLACK, (rect_x, rect_y), (rect_x, rect_y + rect_height), 3)  # Left line
+        pygame.draw.line(window, BLACK, (rect_x + rect_width, rect_y),
+                         (rect_x + rect_width, rect_y + rect_height), 3)  # Right line
+        pygame.draw.line(window, BLACK, (rect_x, rect_y + rect_height),
+                         (rect_x + rect_width, rect_y + rect_height), 3)  # Bottom line
+
+        # Draw the green circle
+        pygame.draw.circle(window, GREEN, (circle_x, circle_y), circle_radius)
+
+        # Draw the gold coin for level 5 if it's not collected
+        if not coin_collected:
+            pygame.draw.rect(window, GOLD, (coin_x_level5, coin_y_level5, coin_size, coin_size))
+        else:
+            # Call the victory_screen function
+            victory_screen()
+            # Break out of the main game loop
+            break
+
+        # Update the display
+        pygame.display.flip()
+
+def victory_screen():
+    # Fill the screen with light blue
+    window.fill(LIGHT_BLUE)
+
+    # Display "You Win!" message
+    font = pygame.font.Font(None, 36)
+    text = font.render("You Win!", True, WHITE)
+    text_rect = text.get_rect(center=(window_width // 2, window_height // 2 - 50))
+    window.blit(text, text_rect)
+
+    # Draw restart button
+    restart_button_rect = pygame.Rect(window_width // 2 - 50, window_height // 2 + 50, 100, 40)
+    pygame.draw.rect(window, GREEN, restart_button_rect)
+    font = pygame.font.Font(None, 24)
+    restart_text = font.render("Restart", True, WHITE)
+    restart_text_rect = restart_text.get_rect(center= restart_button_rect.center)
+    window.blit(restart_text, restart_text_rect)
+
+    # Update the display
+    pygame.display.flip()
+
+    # Stay on the victory screen until the player chooses to restart or exit
+    while True:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
+            elif event.type == pygame.MOUSEBUTTONDOWN:
+                mouse_pos = pygame.mouse.get_pos()
+                if restart_button_rect.collidepoint(mouse_pos):
+                    # Restart the game by resetting all levels to level 1
+                    reset_levels()
+                    # Start from level 1
+                    current_level = 1
+                    # Return to the main game loop
+                    return
 
 
-if __name__ == "__main__":
-    main()
+def reset_levels():
+    global current_level, circle_x, circle_y, coin_x, coin_y, coin_collected_level1, coin_collected_level2, coin_collected_level3, coin_collected_level4, coin_collected_level5
+
+    # Reset player position for all levels
+    circle_x = window_width // 2
+    circle_y = window_height // 2
+
+    # Reset coin collected status for all levels
+    coin_collected_level1 = False
+    coin_collected_level2 = False
+    coin_collected_level3 = False
+    coin_collected_level4 = False
+    coin_collected_level5 = False
+
+    # Reset current level to 1
+    current_level = 1
+
+# Main game loop
+while True:
+    if current_level == 1:
+        level_1()
+    elif current_level == 2:
+        level_2()
+    elif current_level == 3:
+        level_3()
+    elif current_level == 4:
+        level_4()
+    elif current_level == 5:
+        level_5()
+    elif current_level == "victory screen":
+        victory_screen()
+
+# Quit Pygame
+pygame.quit()
+sys.exit()
