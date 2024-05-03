@@ -262,6 +262,34 @@ def level_2():
     larger_coin_radius = 20
     coin_positions_level2[-1] = (675, 125)
 
+    # Set up the red square obstacle 1
+    obstacle1_size = 50
+    obstacle1_x = 50
+    obstacle1_y = 275
+    obstacle1_speed = 1
+    obstacle1_direction = 1  # 1 for moving right, -1 for moving left
+
+    # Set up the second red square obstacle
+    obstacle2_size = 50
+    obstacle2_x = 400
+    obstacle2_y = 430
+    obstacle2_speed = 0.3  # Adjust the speed
+    obstacle2_direction = 1  # 1 for moving right, -1 for moving left
+
+    # Set up the third red square obstacle (moving up and down)
+    obstacle3_size = 50
+    obstacle3_x = 375
+    obstacle3_y = 100
+    obstacle3_speed = 0.4  # Adjust the speed
+    obstacle3_direction = 1  # 1 for moving down, -1 for moving up
+
+    # Set up the fourth red square obstacle (moving left and right)
+    obstacle4_size = 50
+    obstacle4_x = 500
+    obstacle4_y = 130
+    obstacle4_speed = 0.3  # Adjust the speed
+    obstacle4_direction = 1  # 1 for moving right, -1 for moving left
+
     # Main loop for level 2
     while current_level == 2:
         # Clear the window surface
@@ -288,22 +316,32 @@ def level_2():
                     current_level = 3
                 break
 
-        # Check for collision with black lines
-        if (
-                circle_x - circle_radius <= rect_x_level2 or circle_x + circle_radius >= rect_x_level2 + rect_width_level2 or
-                circle_y - circle_radius <= rect_y_level2 or circle_y + circle_radius >= rect_y_level2 + rect_height_level2):
-            # Prevent movement in the collided direction
-            if circle_x - circle_radius <= rect_x_level2:
-                circle_x = rect_x_level2 + circle_radius
-            elif circle_x + circle_radius >= rect_x_level2 + rect_width_level2:
-                circle_x = rect_x_level2 + rect_width_level2 - circle_radius
-            if circle_y - circle_radius <= rect_y_level2:
-                circle_y = rect_y_level2 + circle_radius
-            elif circle_y + circle_radius >= rect_y_level2 + rect_height_level2:
-                circle_y = rect_y_level2 + rect_height_level2 - circle_radius
+        # Check for collision with obstacles only if shift key is not pressed
+        shift_pressed = pygame.key.get_pressed()[pygame.K_LSHIFT] or pygame.key.get_pressed()[pygame.K_RSHIFT]
+        if not shift_pressed:
+            # Update obstacle positions regardless of collision
+            obstacle1_x += obstacle1_speed * obstacle1_direction
+            if obstacle1_x <= 0 or obstacle1_x >= window_width - obstacle1_size:
+                obstacle1_direction *= -1  # Change direction when hitting the window edge
+
+            # Update obstacle2 position
+            obstacle2_x += obstacle2_speed * obstacle2_direction
+            if obstacle2_x <= 0 or obstacle2_x >= window_width - obstacle2_size:
+                obstacle2_direction *= -1  # Change direction when hitting the window edge
+
+            # Update obstacle3 position
+            obstacle3_y += obstacle3_speed * obstacle3_direction
+            if obstacle3_y <= 0 or obstacle3_y >= window_height - obstacle3_size:
+                obstacle3_direction *= -1  # Change direction when hitting the window edge
+
+            # Update obstacle4 position
+            obstacle4_x += obstacle4_speed * obstacle4_direction
+            if obstacle4_x <= 0 or obstacle4_x >= window_width - obstacle4_size:
+                obstacle4_direction *= -1  # Change direction when hitting the window edge
 
         # Draw the rectangle for level 2
-        pygame.draw.rect(window, (255, 255, 255), (rect_x_level2, rect_y_level2, rect_width_level2, rect_height_level2))
+        pygame.draw.rect(window, (255, 255, 255),
+                         (rect_x_level2, rect_y_level2, rect_width_level2, rect_height_level2))
 
         # Draw black lines on the perimeter of the rectangle
         pygame.draw.line(window, BLACK, (rect_x_level2, rect_y_level2),
@@ -318,7 +356,8 @@ def level_2():
         # Draw the spawn square (blue square)
         spawn_square_size = 50
         spawn_square_pos = (101, 450)
-        pygame.draw.rect(window, BLUE, (spawn_square_pos[0], spawn_square_pos[1], spawn_square_size, spawn_square_size))
+        pygame.draw.rect(window, BLUE,
+                         (spawn_square_pos[0], spawn_square_pos[1], spawn_square_size, spawn_square_size))
 
         # Draw the finish square (blue square)
         finish_square_size = 50
@@ -332,9 +371,21 @@ def level_2():
         # Draw coins
         for pos in coin_positions_level2:
             if pos == (675, 125):
+                continue  # Skip drawing this coin
+            if pos == (675, 125):
                 pygame.draw.circle(window, GOLD, pos, larger_coin_radius)
             else:
                 pygame.draw.circle(window, GOLD, pos, coin_radius)
+
+        # Draw the red square obstacle
+        pygame.draw.rect(window, RED,
+                         (obstacle1_x, obstacle1_y, obstacle1_size, obstacle1_size))  # Draw the first obstacle
+        pygame.draw.rect(window, RED,
+                         (obstacle2_x, obstacle2_y, obstacle2_size, obstacle2_size))  # Draw the second obstacle
+        pygame.draw.rect(window, RED,
+                         (obstacle3_x, obstacle3_y, obstacle3_size, obstacle3_size))  # Draw the third obstacle
+        pygame.draw.rect(window, RED,
+                         (obstacle4_x, obstacle4_y, obstacle4_size, obstacle4_size))  # Draw the fourth obstacle
 
         # Display text for coin count, attempts count, and current level
         coin_text = font.render(f"Coins: {coin_count}", True, BLACK)
@@ -348,7 +399,6 @@ def level_2():
 
         # Update the display
         pygame.display.flip()
-
 
 # Level 3
 def level_3():
