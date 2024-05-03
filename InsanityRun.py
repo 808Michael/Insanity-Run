@@ -339,6 +339,38 @@ def level_2():
             if obstacle4_x <= 0 or obstacle4_x >= window_width - obstacle4_size:
                 obstacle4_direction *= -1  # Change direction when hitting the window edge
 
+            circle_rect = pygame.Rect(circle_x - circle_radius, circle_y - circle_radius, 2 * circle_radius,
+                                      2 * circle_radius)
+            obstacle_rects = [
+                pygame.Rect(obstacle1_x, obstacle1_y, obstacle1_size, obstacle1_size),
+                pygame.Rect(obstacle2_x, obstacle2_y, obstacle2_size, obstacle2_size),
+                pygame.Rect(obstacle3_x, obstacle3_y, obstacle3_size, obstacle3_size),
+                pygame.Rect(obstacle4_x, obstacle4_y, obstacle4_size, obstacle4_size)
+            ]
+            for obstacle_rect in obstacle_rects:
+                if circle_rect.colliderect(obstacle_rect):
+                    # Reset player position and coin count
+                    circle_x = spawn_square_pos[0] + spawn_square_size // 2
+                    circle_y = spawn_square_pos[1] + spawn_square_size // 2
+                    coin_count = 0
+                    death_sound.play()
+                    attempts += 1
+                    # Respawn coins
+                    coin_positions_level2 = [
+                        (200, 300),
+                        (110, 110),
+                        (200, 450),
+                        (400, 150),
+                        (400, 300),
+                        (400, 450),
+                        (600, 450),
+                        (690, 490),
+                        (600, 300),
+                        (675, 125),
+                    ]
+                    coin_positions_level2[-1] = (675, 125)
+                    break
+
         # Draw the rectangle for level 2
         pygame.draw.rect(window, (255, 255, 255),
                          (rect_x_level2, rect_y_level2, rect_width_level2, rect_height_level2))
