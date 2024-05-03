@@ -290,6 +290,9 @@ def level_2():
     obstacle4_speed = 0.3  # Adjust the speed
     obstacle4_direction = 1  # 1 for moving right, -1 for moving left
 
+    # Define buffer distance
+    buffer_distance = 150  # Adjust this value according to your preference
+
     # Main loop for level 2
     while current_level == 2:
         # Clear the window surface
@@ -326,8 +329,8 @@ def level_2():
 
             # Update obstacle2 position
             obstacle2_x += obstacle2_speed * obstacle2_direction
-            if obstacle2_x <= 0 or obstacle2_x >= window_width - obstacle2_size:
-                obstacle2_direction *= -1  # Change direction when hitting the window edge
+            if obstacle2_x <= buffer_distance or obstacle2_x >= window_width - obstacle2_size - buffer_distance:
+                obstacle2_direction *= -1  # Change direction when hitting the window edge with a buffer distance
 
             # Update obstacle3 position
             obstacle3_y += obstacle3_speed * obstacle3_direction
@@ -336,8 +339,8 @@ def level_2():
 
             # Update obstacle4 position
             obstacle4_x += obstacle4_speed * obstacle4_direction
-            if obstacle4_x <= 0 or obstacle4_x >= window_width - obstacle4_size:
-                obstacle4_direction *= -1  # Change direction when hitting the window edge
+            if obstacle4_x <= buffer_distance or obstacle4_x >= window_width - obstacle4_size - buffer_distance:
+                obstacle4_direction *= -1  # Change direction when hitting the window edge with a buffer distance
 
             circle_rect = pygame.Rect(circle_x - circle_radius, circle_y - circle_radius, 2 * circle_radius,
                                       2 * circle_radius)
@@ -434,26 +437,51 @@ def level_2():
 
 # Level 3
 def level_3():
-    global circle_x, circle_y, circle_radius, current_level, coin_x_level3, coin_y_level3, coin_collected, coin_count, attempts
+    global circle_x, circle_y, circle_radius, current_level, coin_count, attempts, coin_collected
     attempts = 0
+    coin_count = 0
+    coin_collected = False
 
     # Set up level 3
     # Set up the circle
-    circle_x = window_width // 2
-    circle_y = window_height // 2
+    circle_x = 395
+    circle_y = 60
     circle_speed = 0.25
 
     # Position and size of the rectangle
     rect_width = 300
     rect_height = 500
-    rect_x = (window_width - rect_width) // 2  # Center the rectangle horizontally
-    rect_y = (window_height - rect_height) // 2  # Center the rectangle vertically
+    rect_x = 250
+    rect_y = 50
 
-    # Set up the gold coin for level 3
-    coin_size = 20
-    coin_x_level3 = 400
-    coin_y_level3 = 400
-    coin_collected = False
+    # Set up the gold coins for level 3
+    coin_size = 10
+    coin_positions_level3 = [
+        (395, 100),
+        (395, 150),
+        (395, 200),
+        (395, 250),
+        (395, 300),
+        (395, 350),
+        (395, 400),
+        (395, 450),
+        (395, 500),
+        (395, 530),  # Adjusted coin position
+    ]
+
+    # Set up red squares for level 3
+    square_size = 15
+    square_positions_level3 = [
+        (300, 100, 0.11),  # Add a velocity parameter for each square
+        (300, 150, 0.12),  # Adjust velocity for different speeds
+        (300, 200, 0.13),
+        (300, 250, 0.14),
+        (300, 300, 0.15),
+        (300, 350, 0.16),
+        (300, 400, 0.17),
+        (300, 450, 0.18),
+        (300, 500, 0.19),
+    ]
 
     # Main loop for level 3
     while current_level == 3:
@@ -464,15 +492,21 @@ def level_3():
                 sys.exit()
 
         # Handle key presses
-        circle_x, circle_y = handle_key_presses(circle_x, circle_y, circle_speed)
+        keys = pygame.key.get_pressed()
+        ignore_collision = keys[pygame.K_LSHIFT] or keys[pygame.K_RSHIFT]  # Check if shift key is pressed
 
-        # Check for collision with the gold coin
-        if not coin_collected and circle_x + circle_radius > coin_x_level3 and circle_x - circle_radius < coin_x_level3 + coin_size \
-                and circle_y + circle_radius > coin_y_level3 and circle_y - circle_radius < coin_y_level3 + coin_size:
-            coin_collected = True
-            coin_count += 1
-            # Transition to level 4
-            current_level = 4
+        if not ignore_collision:
+            circle_x, circle_y = handle_key_presses(circle_x, circle_y, circle_speed)
+
+        # Movement even if shift is pressed
+        if keys[pygame.K_LEFT]:
+            circle_x -= circle_speed
+        if keys[pygame.K_RIGHT]:
+            circle_x += circle_speed
+        if keys[pygame.K_UP]:
+            circle_y -= circle_speed
+        if keys[pygame.K_DOWN]:
+            circle_y += circle_speed
 
         # Check for collision with black lines
         if (circle_x - circle_radius <= rect_x or circle_x + circle_radius >= rect_x + rect_width or
@@ -487,6 +521,49 @@ def level_3():
             elif circle_y + circle_radius >= rect_y + rect_height:
                 circle_y = rect_y + rect_height - circle_radius
 
+        # Check for collision with the red squares, only if collision is not ignored
+        if not ignore_collision:
+            for square_x, square_y, _ in square_positions_level3:
+                distance = math.sqrt((circle_x - square_x) ** 2 + (circle_y - square_y) ** 2)
+                if distance < circle_radius + square_size / 2:
+                    # Collision detected, reset player position
+                    circle_x = 395
+                    circle_y = 60
+                    # Play death sound
+                    death_sound.play()
+                    # Reset coin count
+                    coin_count = 0
+                    # Respawn all the coins
+                    coin_positions_level3 = [
+                        (395, 100),
+                        (395, 150),
+                        (395, 200),
+                        (395, 250),
+                        (395, 300),
+                        (395, 350),
+                        (395, 400),
+                        (395, 450),
+                        (395, 500),
+                        (395, 530),  # Adjusted coin position
+                    ]
+
+        # Check for collision with the gold coins
+        for coin_pos in coin_positions_level3:
+            coin_x, coin_y = coin_pos
+            if (circle_x + circle_radius > coin_x - coin_size / 2 and circle_x - circle_radius < coin_x + coin_size / 2
+                    and circle_y + circle_radius > coin_y - coin_size / 2 and circle_y - circle_radius < coin_y + coin_size / 2):
+                if coin_pos == (395, 530):  # If the collision is with the specific coin
+                    # Perform actions specific to this coin
+                    coin_positions_level3.remove(coin_pos)  # Remove the coin from the list
+                else:
+                    # Perform actions for other coins
+                    coin_positions_level3.remove(coin_pos)  # Remove the coin from the list
+                    coin_count += 1  # Increment the coin counter
+
+                if len(coin_positions_level3) == 0:  # No coins left, transition to level 4
+                    current_level = 4
+                break
+
         # Draw the rectangle
         pygame.draw.rect(window, (255, 255, 255), pygame.Rect(rect_x, rect_y, rect_width, rect_height))
 
@@ -498,12 +575,41 @@ def level_3():
         pygame.draw.line(window, BLACK, (rect_x, rect_y + rect_height),
                          (rect_x + rect_width, rect_y + rect_height), 3)  # Bottom line
 
+        # Update red squares position
+        for i, (square_x, square_y, velocity) in enumerate(square_positions_level3):
+            # Move the square horizontally
+            square_x += velocity
+            # Check if the square reached the boundaries
+            if square_x - square_size // 2 <= rect_x or square_x + square_size // 2 >= rect_x + rect_width:
+                # Reverse the velocity to change direction
+                velocity *= -1
+            # Update the position and velocity of the square
+            square_positions_level3[i] = (square_x, square_y, velocity)
+
+        # Draw the spawn square (blue square)
+        spawn_square_size = 50
+        spawn_square_pos = (370, 50)  # Adjusted spawn square position
+        pygame.draw.rect(window, BLUE,
+                         (spawn_square_pos[0], spawn_square_pos[1], spawn_square_size, spawn_square_size))
+
+        # Draw the finish square (blue square)
+        finish_square_size = 50
+        finish_square_pos = (370, 500)  # Adjusted finish square position
+        pygame.draw.rect(window, BLUE,
+                         (finish_square_pos[0], finish_square_pos[1], finish_square_size, finish_square_size))
+
         # Draw the green circle
         pygame.draw.circle(window, GREEN, (circle_x, circle_y), circle_radius)
 
-        # Draw the gold coin for level 3 as a circle
-        pygame.draw.circle(window, GOLD, (coin_x_level3 + coin_size // 2, coin_y_level3 + coin_size // 2),
-                           coin_size // 2)
+        # Draw the red squares for level 3
+        for square_x, square_y, _ in square_positions_level3:
+            pygame.draw.rect(window, RED,
+                             (square_x - square_size // 2, square_y - square_size // 2, square_size, square_size))
+
+        # Draw the gold coins for level 3
+        for coin_pos in coin_positions_level3:
+            if coin_pos != (395, 530):  # Draw all coins except the invisible one
+                pygame.draw.circle(window, GOLD, coin_pos, coin_size)
 
         # Clear the area where the text is rendered
         window.fill(LIGHT_BLUE, (0, 0, window_width, 40))
