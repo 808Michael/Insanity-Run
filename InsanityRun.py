@@ -10,15 +10,15 @@ pygame.init()
 window_width = 800
 window_height = 600
 window = pygame.display.set_mode((window_width, window_height))
-pygame.display.set_caption("Insanity Run")
+pygame.display.set_caption("Game")
 
 # Set up the colors
 LIGHT_BLUE = (173, 216, 230)  # Light blue color
 BLUE = (100, 149, 200)
 BLACK = (0, 0, 0)
 WHITE = (255, 255, 255)
-GREEN = (0, 255, 0)
 RED = (255, 0, 0)
+GREEN = (0, 255, 0)
 GOLD = (255, 215, 0)  # Gold color
 
 # Global variables
@@ -47,19 +47,48 @@ def handle_key_presses(circle_x, circle_y, circle_speed, rect_x=None, rect_y=Non
         circle_y += circle_speed
     return circle_x, circle_y
 
+
+class OrbitingSquare:
+    def __init__(self, center, angle_offset, radius, size):
+        self.center = center
+        self.angle_offset = angle_offset
+        self.radius = radius
+        self.size = size  # Size of the square
+        self.angle = 0
+        self.x = center[0] + radius * math.cos(math.radians(angle_offset))
+        self.y = center[1] + radius * math.sin(math.radians(angle_offset))
+        self.last_update_time = pygame.time.get_ticks()
+
+    def update_position(self):
+        current_time = pygame.time.get_ticks()
+        elapsed_time = current_time - self.last_update_time
+        self.last_update_time = current_time
+
+        angle_increment = (elapsed_time / 1000) * 150
+
+        self.angle += angle_increment
+        self.angle %= 360
+        self.x = self.center[0] + self.radius * math.cos(math.radians(self.angle + self.angle_offset))
+        self.y = self.center[1] + self.radius * math.sin(math.radians(self.angle + self.angle_offset))
+
+    def draw(self, screen):
+        # Adjust size of the square based on self.size
+        pygame.draw.rect(screen, RED, (self.x - self.size / 2, self.y - self.size / 2, self.size, self.size))
+
 # Level 1
 def level_1():
     global circle_x, circle_y, coins, circle_radius, current_level, coin_count
     attempts = 0
+
     # Set up the square
     square_size = 500
     square_x = 150
     square_y = 50
 
-    # Set up the circle
-    circle_x = 170
-    circle_y = 70
-    circle_speed = 0.25
+    # Set up the circle (player spawn location)
+    circle_x = 170  # Set the player spawn location x-coordinate
+    circle_y = 70  # Set the player spawn location y-coordinate
+    circle_speed = 0.15
 
     # Set up the gold coins
     coin_radius = 10
@@ -76,20 +105,12 @@ def level_1():
         (500, 400),
     ]
     coins = coin_positions
+    initial_coin_positions = coins[:]  # Copy the initial positions
 
-    # Set up the red squares
-    red_squares = [
-        pygame.Rect(263, 163, 15, 15),
-        pygame.Rect(363, 63, 15, 15),
-        pygame.Rect(563, 63, 15, 15),
-        pygame.Rect(163, 263, 15, 15),
-        pygame.Rect(363, 263, 15, 15),
-        pygame.Rect(563, 263, 15, 15),
-        pygame.Rect(163, 463, 15, 15),
-        pygame.Rect(363, 463, 15, 15),
-        pygame.Rect(563, 463, 15, 15),
-        pygame.Rect(463, 363, 15, 15),
-    ]
+    # Create a list to store OrbitingSquare instances for each gold coin
+    coin_orbiting_squares = []
+    for coin_pos in coins:
+        coin_orbiting_squares.append(OrbitingSquare(center=coin_pos, angle_offset=0, radius=30, size=20))
 
     # Main loop
     while current_level == 1:
@@ -101,7 +122,8 @@ def level_1():
                 sys.exit()
 
         # Handle key presses
-        circle_x, circle_y = handle_key_presses(circle_x, circle_y, circle_speed, square_x, square_y, square_size, square_size)
+        circle_x, circle_y = handle_key_presses(circle_x, circle_y, circle_speed, square_x, square_y, square_size,
+                                                square_size)
 
         # Check for collision with the gold coins
         for coin_pos in coins:
@@ -114,16 +136,19 @@ def level_1():
                     current_level = 2
                 break
 
-        # Check for collision with red squares
-        for square in red_squares:
-            if square.colliderect(pygame.Rect(circle_x - circle_radius, circle_y - circle_radius, 2 * circle_radius,
-                                              2 * circle_radius)):
-                # Collision detected with red square, increase attempts
+        # Check for collision with the player square
+        for orbiting_square in coin_orbiting_squares:
+            if (circle_x + circle_radius > orbiting_square.x - 5 and circle_x - circle_radius < orbiting_square.x + 5
+                    and circle_y + circle_radius > orbiting_square.y - 5 and circle_y - circle_radius < orbiting_square.y + 5):
+                # Collision occurred, handle accordingly (e.g., decrease attempts)
                 attempts += 1
-
-                # Reset circle position
+                # Reset player position to spawn location
                 circle_x = 170
                 circle_y = 70
+                # Reset coin count to initial value
+                coin_count = 0
+                # Respawn all coins on the screen
+                coins = initial_coin_positions[:]
 
         # Draw the larger white square
         pygame.draw.rect(window, (255, 255, 255), (square_x, square_y, square_size, square_size))
@@ -136,16 +161,17 @@ def level_1():
         pygame.draw.line(window, BLACK, (square_x, square_y + square_size),
                          (square_x + square_size, square_y + square_size), 3)  # Bottom line
 
-        # Draw the green circle
+        # Draw the green circle (player)
         pygame.draw.circle(window, GREEN, (circle_x, circle_y), circle_radius)
 
         # Draw the gold coins
         for coin_pos in coins:
             pygame.draw.circle(window, GOLD, coin_pos, coin_radius)
 
-        # Draw the red squares
-        for square in red_squares:
-            pygame.draw.rect(window, RED, square)
+        # Draw the red squares for each gold coin
+        for orbiting_square in coin_orbiting_squares:
+            orbiting_square.update_position()  # Update position
+            orbiting_square.draw(window)  # Draw
 
         # Clear the area where the coin count text is rendered
         window.fill(LIGHT_BLUE, (0, 0, 200, 40))
