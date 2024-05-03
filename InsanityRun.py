@@ -30,6 +30,19 @@ attempts = 0
 # Define font
 font = pygame.font.SysFont("times new roman", 20)
 
+# Initialize the mixer module
+pygame.mixer.init()
+
+# Load the sound file
+pygame.mixer.music.load('mp3/535331_Stay-Inside-Me.mp3')
+death_sound = pygame.mixer.Sound('mp3/geometry-dash-death-sound-effect.mp3')
+
+# Set the volume level (optional)
+pygame.mixer.music.set_volume(0.5)  # Adjust volume level between 0.0 and 1.0
+
+# Start playing the sound on a loop
+pygame.mixer.music.play(loops=-1)  # Set loops to -1 for infinite looping
+
 # Function to generate a random position within the square
 def generate_random_position(square_x, square_y, square_size, coin_size):
     return random.randint(square_x, square_x + square_size - coin_size), random.randint(square_y, square_y + square_size - coin_size)
@@ -86,9 +99,9 @@ def level_1():
     square_y = 50
 
     # Set up the circle (player spawn location)
-    circle_x = 170  # Set the player spawn location x-coordinate
-    circle_y = 70  # Set the player spawn location y-coordinate
-    circle_speed = 0.15
+    circle_x = 175  # Set the player spawn location x-coordinate
+    circle_y = 75  # Set the player spawn location y-coordinate
+    circle_speed = 0.1
 
     # Set up the gold coins
     coin_radius = 10
@@ -101,15 +114,15 @@ def level_1():
         (600, 300),
         (200, 500),
         (400, 500),
-        (600, 500),
         (500, 400),
+        (625, 525),
     ]
     coins = coin_positions
     initial_coin_positions = coins[:]  # Copy the initial positions
 
     # Create a list to store OrbitingSquare instances for each gold coin
     coin_orbiting_squares = []
-    for coin_pos in coins:
+    for coin_pos in coins[:-1]:
         coin_orbiting_squares.append(OrbitingSquare(center=coin_pos, angle_offset=0, radius=30, size=20))
 
     # Main loop
@@ -141,12 +154,11 @@ def level_1():
             if (circle_x + circle_radius > orbiting_square.x - 5 and circle_x - circle_radius < orbiting_square.x + 5
                     and circle_y + circle_radius > orbiting_square.y - 5 and circle_y - circle_radius < orbiting_square.y + 5):
                 # Collision occurred, handle accordingly (e.g., decrease attempts)
+                death_sound.play()
                 attempts += 1
                 # Reset player position to spawn location
                 circle_x = 170
                 circle_y = 70
-                # Reset coin count to initial value
-                coin_count = 0
                 # Respawn all coins on the screen
                 coins = initial_coin_positions[:]
 
@@ -161,12 +173,24 @@ def level_1():
         pygame.draw.line(window, BLACK, (square_x, square_y + square_size),
                          (square_x + square_size, square_y + square_size), 3)  # Bottom line
 
+        # Draw the spawn square (blue square)
+        spawn_square_size = 50
+        spawn_square_pos = (152, 52)
+        pygame.draw.rect(window, BLUE, (spawn_square_pos[0], spawn_square_pos[1], spawn_square_size, spawn_square_size))
+
+        # Draw the finish square (blue square)
+        finish_square_size = 50
+        finish_square_pos = (599, 499)
+        pygame.draw.rect(window, BLUE,
+                         (finish_square_pos[0], finish_square_pos[1], finish_square_size, finish_square_size))
+
         # Draw the green circle (player)
         pygame.draw.circle(window, GREEN, (circle_x, circle_y), circle_radius)
 
         # Draw the gold coins
         for coin_pos in coins:
-            pygame.draw.circle(window, GOLD, coin_pos, coin_radius)
+            if coin_pos != (625, 525):  # Skip drawing the coin at (625, 525)
+                pygame.draw.circle(window, GOLD, coin_pos, coin_radius)
 
         # Draw the red squares for each gold coin
         for orbiting_square in coin_orbiting_squares:
