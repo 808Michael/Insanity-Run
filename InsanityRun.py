@@ -434,7 +434,9 @@ def level_2():
 
 # Level 3
 def level_3():
-    global circle_x, circle_y, circle_radius, current_level, coin_x_level3, coin_y_level3, coin_collected
+    global circle_x, circle_y, circle_radius, current_level, coin_x_level3, coin_y_level3, coin_collected, coin_count, attempts
+    attempts = 0
+
     # Set up level 3
     # Set up the circle
     circle_x = window_width // 2
@@ -468,6 +470,7 @@ def level_3():
         if not coin_collected and circle_x + circle_radius > coin_x_level3 and circle_x - circle_radius < coin_x_level3 + coin_size \
                 and circle_y + circle_radius > coin_y_level3 and circle_y - circle_radius < coin_y_level3 + coin_size:
             coin_collected = True
+            coin_count += 1
             # Transition to level 4
             current_level = 4
 
@@ -502,19 +505,21 @@ def level_3():
         pygame.draw.circle(window, GOLD, (coin_x_level3 + coin_size // 2, coin_y_level3 + coin_size // 2),
                            coin_size // 2)
 
-        # Display text for coin count, attempts count, and current level
+        # Clear the area where the text is rendered
+        window.fill(LIGHT_BLUE, (0, 0, window_width, 40))
+
+        # Update all text surfaces
         coin_text = font.render(f"Coins: {coin_count}", True, BLACK)
-        window.blit(coin_text, (20, 20))
-
         attempts_text = font.render(f"Attempts: {attempts}", True, BLACK)
-        window.blit(attempts_text, (window_width // 2 - 60, 20))
-
         level_text = font.render(f"Level: {current_level}/5", True, BLACK)
+
+        # Display all text elements
+        window.blit(coin_text, (20, 20))
+        window.blit(attempts_text, (window_width // 2 - 60, 20))
         window.blit(level_text, (window_width - 130, 20))
 
         # Update the display
         pygame.display.flip()
-
 
 # Level 4
 def level_4():
