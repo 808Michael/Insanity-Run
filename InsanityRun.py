@@ -23,7 +23,7 @@ GOLD = (255, 215, 0)  # Gold color
 
 # Global variables
 circle_radius = 10
-current_level = 1
+current_level = 5
 coin_count = 0
 attempts = 0
 
@@ -111,15 +111,6 @@ def level_1():
     coin_radius = 10
     coin_positions = [
         (300, 200),
-        (400, 100),
-        (600, 100),
-        (200, 300),
-        (400, 300),
-        (600, 300),
-        (200, 500),
-        (400, 500),
-        (500, 400),
-        (625, 525),
     ]
     coins = coin_positions
     initial_coin_positions = coins[:]  # Copy the initial positions
@@ -247,15 +238,6 @@ def level_2():
     coin_radius = 10
     coin_positions_level2 = [
         (200, 300),
-        (110, 110),
-        (200, 450),
-        (400, 150),
-        (400, 300),
-        (400, 450),
-        (600, 450),
-        (690, 490),
-        (600, 300),
-        (675, 125),
     ]
 
     # Make the coin at (625, 125) larger
@@ -273,7 +255,7 @@ def level_2():
     obstacle2_size = 50
     obstacle2_x = 400
     obstacle2_y = 430
-    obstacle2_speed = 0.3  # Adjust the speed
+    obstacle2_speed = 0.9  # Adjust the speed
     obstacle2_direction = 1  # 1 for moving right, -1 for moving left
 
     # Set up the third red square obstacle (moving up and down)
@@ -287,7 +269,7 @@ def level_2():
     obstacle4_size = 50
     obstacle4_x = 500
     obstacle4_y = 130
-    obstacle4_speed = 0.3  # Adjust the speed
+    obstacle4_speed = 0.9  # Adjust the speed
     obstacle4_direction = 1  # 1 for moving right, -1 for moving left
 
     # Define buffer distance
@@ -356,8 +338,8 @@ def level_2():
                     circle_x = spawn_square_pos[0] + spawn_square_size // 2
                     circle_y = spawn_square_pos[1] + spawn_square_size // 2
                     coin_count = 0
-                    death_sound.play()
                     attempts += 1
+                    death_sound.play()
                     # Respawn coins
                     coin_positions_level2 = [
                         (200, 300),
@@ -434,6 +416,7 @@ def level_2():
 
         # Update the display
         pygame.display.flip()
+
 
 # Level 3
 def level_3():
@@ -627,6 +610,7 @@ def level_3():
         # Update the display
         pygame.display.flip()
 
+
 def level_4():
     global circle_x, circle_y, circle_radius, current_level, coin_collected, attempts, coin_radius
 
@@ -815,26 +799,53 @@ def level_4():
         # Update the display
         pygame.display.flip()
 
+
 # Level 5
 def level_5():
-    global circle_x, circle_y, circle_radius, current_level, coin_x_level5, coin_y_level5, coin_collected
+    global circle_x, circle_y, circle_radius, current_level, coin_collected, coin_count, attempts, coin_positions
+
     # Set up level 5
+    checkpoint_reached = False
+
     # Set up the circle
-    circle_x = window_width // 2
-    circle_y = window_height // 2
+    circle_x = 400
+    circle_y = 100
     circle_speed = 0.25
 
     # Position and size of the rectangle for Level 5
-    rect_width = 400
-    rect_height = 500
+    rect_width = 330
+    rect_height = 450
     rect_x = (window_width - rect_width) // 2  # Center the rectangle horizontally
     rect_y = (window_height - rect_height) // 2  # Center the rectangle vertically
 
-    # Set up the gold coin for level 5
-    coin_radius = 10  # Adjust the radius to make it smaller than the circle
-    coin_x_level5 = 400
-    coin_y_level5 = 400
-    coin_collected = False
+    # Set up the gold coins for Level 5
+    coin_radius = 10
+    coin_positions = [
+        (330, 200),
+        (470, 200),
+        (400, 200),
+        (550, 100),
+        (250, 100),
+        (330, 400),
+        (400, 400),
+        (470, 400),
+        (550, 500),
+        (250, 500),
+        (400, 500),#
+    ]
+
+    # Set up red squares for level 5
+    square_size = 15
+    horizontal_squares = [
+        (329, 199, 0.1, 329, 469),  # (x, y, velocity, min_x, max_x)
+        (469, 399, 0.1, 329, 469),
+    ]
+    vertical_squares = [
+        (245, 100, 0.2, 100, 250),  # (x, y, velocity, min_y, max_y) for the square corresponding to (330, 200)
+        (550, 100, 0.2, 100, 250),  # (x, y, velocity, min_y, max_y) for the square corresponding to (470, 200)
+        (245, 400, 0.2, 350, 500),  # (x, y, velocity, min_y, max_y) for the square corresponding to (330, 200)
+        (550, 400, 0.2, 350, 500),  # (x, y, velocity, min_y, max_y) for the square corresponding to (470, 200)
+    ]
 
     # Main loop for level 5
     while current_level == 5:
@@ -847,24 +858,69 @@ def level_5():
         # Handle key presses
         circle_x, circle_y = handle_key_presses(circle_x, circle_y, circle_speed)
 
-        # Check for collision with the gold coin
-        if not coin_collected and circle_x + circle_radius > coin_x_level5 and circle_x - circle_radius < coin_x_level5 + coin_radius \
-                and circle_y + circle_radius > coin_y_level5 and circle_y - circle_radius < coin_y_level5 + coin_radius:
-            coin_collected = True
+        # Check for collision with gold coins
+        for coin_pos in coin_positions:
+            coin_x, coin_y = coin_pos
+            distance = math.sqrt((circle_x - coin_x) ** 2 + (circle_y - coin_y) ** 2)
+            if distance < circle_radius + coin_radius:
+                coin_positions.remove(coin_pos)
+                coin_count += 1
+
+        # Check for victory condition
+        if len(coin_positions) == 0:
+            # Transition to victory screen
+            victory_screen()
+            return  # Exit the level 5 loop
 
         # Check for collision with black lines
-        if not coin_collected:
-            if (circle_x - circle_radius <= rect_x or circle_x + circle_radius >= rect_x + rect_width or
-                    circle_y - circle_radius <= rect_y or circle_y + circle_radius >= rect_y + rect_height):
-                # Prevent movement in the collided direction
-                if circle_x - circle_radius <= rect_x:
-                    circle_x = rect_x + circle_radius
-                elif circle_x + circle_radius >= rect_x + rect_width:
-                    circle_x = rect_x + rect_width - circle_radius
-                if circle_y - circle_radius <= rect_y:
-                    circle_y = rect_y + circle_radius
-                elif circle_y + circle_radius >= rect_y + rect_height:
-                    circle_y = rect_y + rect_height - circle_radius
+        if (circle_x - circle_radius <= rect_x or circle_x + circle_radius >= rect_x + rect_width or
+                circle_y - circle_radius <= rect_y or circle_y + circle_radius >= rect_y + rect_height):
+            # Prevent movement in the collided direction
+            if circle_x - circle_radius <= rect_x:
+                circle_x = rect_x + circle_radius
+            elif circle_x + circle_radius >= rect_x + rect_width:
+                circle_x = rect_x + rect_width - circle_radius
+            if circle_y - circle_radius <= rect_y:
+                circle_y = rect_y + circle_radius
+            elif circle_y + circle_radius >= rect_y + rect_height:
+                circle_y = rect_y + rect_height - circle_radius
+
+            # Check for collision with red squares
+        for square_x, square_y, _, _, _ in horizontal_squares + vertical_squares:
+            distance = math.sqrt((circle_x - square_x) ** 2 + (circle_y - square_y) ** 2)
+            if distance < circle_radius + square_size / 2:
+                # Respawn the player at the level 5 spawn
+                circle_x, circle_y = 400, 100  # Adjust these coordinates as needed
+                attempts += 1
+                death_sound.play()
+                coin_count = 0
+                coin_positions = [
+                    (330, 200),
+                    (470, 200),
+                    (400, 200),
+                    (550, 100),
+                    (250, 100),
+                    (330, 400),
+                    (400, 400),
+                    (470, 400),
+                    (550, 500),
+                    (250, 500),
+                    (400, 500),
+                ]
+                break
+
+        # Check for collision with checkpoint square
+        if (circle_x + circle_radius >= 236 and circle_y + circle_radius >= 275 and
+                circle_x - circle_radius <= 564 and circle_y - circle_radius <= 325):
+            print("Checkpoint square collision detected")
+            if not checkpoint_reached:  # Check if checkpoint has not been reached before
+                print("Checkpoint reached for the first time")
+                coins_to_remove = [(550, 100), (250, 100), (330, 200), (470, 200), (400, 200)]
+                for coin_pos in coins_to_remove:
+                    if coin_pos in coin_positions:
+                        coin_positions.remove(coin_pos)
+                        coin_count -= 1  # Decrement coin count for each removed coin
+                checkpoint_reached = True  # Set checkpoint flag to True
 
         # Draw the rectangle for Level 5
         pygame.draw.rect(window, (255, 255, 255), pygame.Rect(rect_x, rect_y, rect_width, rect_height))
@@ -877,32 +933,77 @@ def level_5():
         pygame.draw.line(window, BLACK, (rect_x, rect_y + rect_height),
                          (rect_x + rect_width, rect_y + rect_height), 3)  # Bottom line
 
+        # Update horizontal squares position
+        for i, (square_x, square_y, velocity, min_x, max_x) in enumerate(horizontal_squares):
+            # Move the square horizontally
+            square_x += velocity
+            # Check if the square reached the horizontal boundaries
+            if square_x < min_x or square_x > max_x:
+                # Reverse the velocity to change direction
+                velocity *= -1
+            # Update the position of the square
+            horizontal_squares[i] = (square_x, square_y, velocity, min_x, max_x)
+
+            # Draw the red square
+            pygame.draw.rect(window, RED,
+                             (square_x - square_size // 2, square_y - square_size // 2, square_size, square_size))
+
+        # Update vertical squares position
+        for i, (square_x, square_y, velocity, min_y, max_y) in enumerate(vertical_squares):
+            # Move the square vertically
+            square_y += velocity
+            # Check if the square reached the vertical boundaries
+            if square_y < min_y or square_y > max_y:
+                # Reverse the velocity to change direction
+                velocity *= -1
+            # Update the position of the square
+            vertical_squares[i] = (square_x, square_y, velocity, min_y, max_y)
+
+            # Draw the red square
+            pygame.draw.rect(window, RED,
+                             (square_x - square_size // 2, square_y - square_size // 2, square_size, square_size))
+
+        # Draw the spawn square (blue square)
+        spawn_square_size = 50
+        spawn_square_pos = (375, 77)  # Adjusted spawn square position
+        pygame.draw.rect(window, BLUE,
+                         (spawn_square_pos[0], spawn_square_pos[1], spawn_square_size, spawn_square_size))
+
+        # Draw the checkpoint square (blue square)
+        spawn_square_width = 328
+        spawn_square_height = 50  # Increase the height to make it taller
+        spawn_square_pos = (236, 275)
+        pygame.draw.rect(window, BLUE,
+                         (spawn_square_pos[0], spawn_square_pos[1], spawn_square_width, spawn_square_height))
+
+        # Draw the finish square (blue square)
+        finish_square_size = 50
+        finish_square_pos = (379, 474)  # Adjusted finish square position
+        pygame.draw.rect(window, BLUE,
+                         (finish_square_pos[0], finish_square_pos[1], finish_square_size, finish_square_size))
+
         # Draw the green circle
         pygame.draw.circle(window, GREEN, (circle_x, circle_y), circle_radius)
 
-        # Draw the gold coin for level 5 if it's not collected
-        if not coin_collected:
-            pygame.draw.circle(window, GOLD, (coin_x_level5, coin_y_level5), coin_radius)
+        # Draw the gold coins for level 5
+        for coin_pos in coin_positions:
+            pygame.draw.circle(window, GOLD, coin_pos, coin_radius)
 
-            # Display text for coin count, attempts count, and current level
-            coin_text = font.render(f"Coins: {coin_count}", True, BLACK)
-            window.blit(coin_text, (20, 20))
+        # Clear the area where the text is rendered
+        window.fill(LIGHT_BLUE, (0, 0, window_width, 40))
 
-            attempts_text = font.render(f"Attempts: {attempts}", True, BLACK)
-            window.blit(attempts_text, (window_width // 2 - 60, 20))
+        # Update all text surfaces outside the loop
+        coin_text = font.render(f"Coins: {coin_count}", True, BLACK)
+        attempts_text = font.render(f"Attempts: {attempts}", True, BLACK)
+        level_text = font.render(f"Level: {current_level}/5", True, BLACK)
 
-            level_text = font.render(f"Level: {current_level}/5", True, BLACK)
-            window.blit(level_text, (window_width - 130, 20))
+        # Display all text elements outside the loop
+        window.blit(coin_text, (20, 20))
+        window.blit(attempts_text, (window_width // 2 - 60, 20))
+        window.blit(level_text, (window_width - 130, 20))
 
-        else:
-            # Call the victory_screen function
-            victory_screen()
-            # Break out of the main game loop
-            break
-
-        # Update the display
+        # Update the display outside the loop
         pygame.display.flip()
-
 
 def victory_screen():
     # Fill the screen with light blue
