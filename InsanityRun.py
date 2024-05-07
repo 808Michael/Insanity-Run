@@ -22,7 +22,7 @@ GOLD = (255, 215, 0)
 
 # Global variables
 circle_radius = 10
-current_level = 1
+current_level = 2
 coin_count = 0
 attempts = 0
 
@@ -257,7 +257,7 @@ def level_2():
     obstacle1_size = 50
     obstacle1_x = 50
     obstacle1_y = 275
-    obstacle1_speed = 1
+    obstacle1_speed = 0.8
     obstacle1_direction = 1
 
     # Obstacle 2
